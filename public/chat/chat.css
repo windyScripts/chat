@@ -2,25 +2,30 @@
     display: inline-block;
     padding: 8px 12px;
     border-radius: 20px;
-    max-width: 70%;
-   /*  margin-bottom: 10px; */
+    /* max-width: 70%; */
+    margin: 0;
     font-size: 16px;
     line-height: 1.5;
-  }
-  
-  .outgoing {
-    background-color: #dcf8c6;
-    float: right;
-  }
-  
-  .incoming {
-    background-color: hsl(214, 100%, 88%);
-    float: left;
-  }
+}
 
-  .fill {
+
+.outgoing {
+    background-color: #dcf8c6;
+}
+
+.incoming {
+    background-color: hsl(214, 100%, 88%);
+}
+
+.fill {
     content: "";
     display: inline-block;
     width: 100%;
     height: 1px;
-  }
+}
+
+#inputButton {
+    font-size: 30px;
+    padding: 6px 15px 6px 15px;
+    margin: 0;
+}

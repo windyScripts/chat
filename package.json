@@ -21,7 +21,7 @@
   "description": "Prototype chat app",
   "version": "1.0.0",
   "main": "app.mjs",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.mjs",

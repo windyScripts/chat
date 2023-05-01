@@ -18,37 +18,45 @@
             <button class="btn btn-danger" id="logout">Log out</button>
         </div>
     </header>
-    <div class="chat-bubble-container">
-        <div class="message">
+    <main class="chat-bubble-container">
+        <div class="message d-flex justify-content-start">
             <div class="chat-bubble outgoing">
                 <p>Hello, how are you?</p>
             </div>
-            <div class="fill">
-            </div>
         </div>
-        <div class="message">
-            <div class="chat-bubble incoming">
+        </div>
+        <div class="message d-flex justify-content-end">
+            <div class="chat-bubble incoming ">
                 <p>Hey, I'm good. How about you?</p>
             </div>
-            <div class="fill">
-            </div>
         </div>
-        <div>
+        </div>
+        <div class="message d-flex justify-content-start">
             <div class="chat-bubble outgoing">
                 <p>I'm doing well, thanks for asking.</p>
             </div>
         </div>
+    </main>
+    <form action="" class="fixed-bottom">
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                <div class="form-floating col-8 p-0">
+                    <input type="text" class="form-control" id="input" placeholder="message content">
+                    <label for="input">Enter a message!</label>
+                </div>
+                <div class="col-auto p-0">
+                    <button class="btn btn-primary btn-sm" id="inputButton">→</button>
+                </div>
+            </div>
+        </div>
+    </form>
 
 
-
-
-
-
-        <script src="./chat.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
-            crossorigin="anonymous"></script>
+    <script src="./chat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
 </body>
 
 </html>
