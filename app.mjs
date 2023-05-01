@@ -44,6 +44,8 @@ app.use('/auth',authRoutes)
     res.sendFile(path.join(__dirname, 'public', req.url));
   }); */
 
+let b = 66;
+
 async function start() {
     await sequelize.sync();
     console.log('Database connected. :)');

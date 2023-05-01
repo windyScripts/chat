@@ -1,5 +1,11 @@
 import { createUser , findOneUser } from '../services/user.mjs';
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+
+function generateAccessToken(id) {
+  const iat = new Date;
+  return jwt.sign({ userId: id, date: iat.getTime() }, process.env.JWT_SIGN);
+}
 
 function invalid(...params) {
     for (let i = 0; i < params.length; i++) {
@@ -26,5 +32,22 @@ try{
   } catch (err) {
     console.log(err);
     return res.status(500).json({message: 'Something went wrong'})
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    const user = await findOneUser({ where: { email: req.body.email }});
+    if (user !== null) {
+      bcrypt.compare(req.body.password, user.password, (err, result) => {
+        if (result === true) {
+          res.status(200).json({ message: 'Login successful', token: generateAccessToken(user.id) });
+        } else if (err) {
+          throw new Error('Something went wrong');
+        } else res.status(401).json({ message: 'Invalid password' });
+      });
+    } else res.status(404).json({ message: 'No such user exists' });
+  } catch (err) {
+    console.log(err);
   }
 };
