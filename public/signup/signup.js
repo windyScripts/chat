@@ -2,7 +2,7 @@
 const hostName = '3.26.180.199';
 const port = 3000;
 const domain = `${scheme}://${hostName}:${port}`; */
-const domain = 'http://localhost:3000'
+const domain = 'http://localhost:3000';
 
 const form = document.querySelector('#form');
 const feedback = document.querySelector('#feedback');
@@ -37,7 +37,7 @@ async function validateAndSubmitForm(e) {
         userName: userNameField.value,
         password: passwordField.value,
         email: emailField.value,
-        phone: phoneNumberField.value
+        phone: phoneNumberField.value,
       };
       await axios.post(domain + '/auth/new', entry);
       userNameField.value = '';
