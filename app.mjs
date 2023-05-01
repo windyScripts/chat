@@ -24,14 +24,14 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
 );
 
 if (environment === 'production') {
-
     app.use(helmet());
-  
     const compression = require('compression');
     app.use(compression());
   } else if (environment === 'development') {
-
-    app.use(cors());
+    app.use(cors({
+      origin: "http://localhost:3000",
+      methods: ["GET","POST"]
+    }));
   }
 
 app.use(morgan('combined', { stream: accessLogStream }));
