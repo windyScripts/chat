@@ -1,0 +1,1 @@
+::1 - - [01/May/2023:09:53:41 +0000] "POST /auth/new HTTP/1.1" 500 34 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
