@@ -29,7 +29,7 @@ async function validateLogin(e) {
       feedback.textContent = 'Login success!';
       const token = response.data.token;
       localStorage.setItem('token', token);
-      window.location.href = '../tracker/tracker.html';
+      window.location.href = '../chat/chat.html';
     } catch (err) {
       feedback.textContent = err.response.data.message;
     }
