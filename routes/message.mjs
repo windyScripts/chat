@@ -5,6 +5,6 @@ import { authorization } from '../middleware/auth.mjs';
 
 const router = Router();
 router.post('/message', authorization, addMessage);
-router.get('/messages',authorization, getMessages);
+router.get('/messages', authorization, getMessages);
 
 export default router;

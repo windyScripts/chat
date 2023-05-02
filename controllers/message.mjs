@@ -11,12 +11,12 @@ export const addMessage = async (req, res) => {
   }
 };
 
-export const getMessages = async (req,res) => {
-    try{
-        const response =  await findAllMessages()
-        console.log(response);
-        return res.status(200).json({response, id:req.user.id})
-    }catch(err){
-        console.log(err);
-    }
-}
+export const getMessages = async (req, res) => {
+  try {
+    const response =  await findAllMessages();
+    console.log(response);
+    return res.status(200).json({ response, id: req.user.id });
+  } catch (err) {
+    console.log(err);
+  }
+};

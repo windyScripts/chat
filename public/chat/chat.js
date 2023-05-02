@@ -31,35 +31,33 @@ const addMessage = async e => {
 };
 inputButton.addEventListener('click', addMessage);
 
+const renderMessage = (element, currentUserID, container) => {
+  const incomingMessageTemplate = document.createElement('div');
+  incomingMessageTemplate.className = 'message d-flex justify-content-start';
 
-const renderMessage = (element,currentUserID,container) => {
-    const incomingMessageTemplate = document.createElement('div');
-    incomingMessageTemplate.className = 'message d-flex justify-content-start';
-    
-    const chatBubble = document.createElement('div');
-    chatBubble.className = 'chat-bubble '+(element.userId===currentUserID?'outgoing':'incoming');
-    
-    const messageContent = document.createElement('p');
-    messageContent.appendChild(document.createTextNode(element.message));
-    
-    chatBubble.appendChild(messageContent);
-    
-    incomingMessageTemplate.appendChild(chatBubble);
-    container.appendChild(incomingMessageTemplate)
-}
+  const chatBubble = document.createElement('div');
+  chatBubble.className = 'chat-bubble ' + (element.userId === currentUserID ? 'outgoing' : 'incoming');
 
+  const messageContent = document.createElement('p');
+  messageContent.appendChild(document.createTextNode(element.message));
+
+  chatBubble.appendChild(messageContent);
+
+  incomingMessageTemplate.appendChild(chatBubble);
+  container.appendChild(incomingMessageTemplate);
+};
 
 const refreshMessages = async () => {
-    try{
-        const token = getToken();
-        const response = await axios.get(domain+'/messages',{headers:{Authorization: token}})
-        const userId = response.data.id;
-        const messages = response.data.response;
-        const container = document.querySelector('#chat-bubble-container')
-        container.innerHTML = '';
-        messages.forEach(element => renderMessage(element,userId,container));
-    }catch(err){
-        console.log(err);
-    }
-}
-window.addEventListener('DOMContentLoaded',refreshMessages)
+  try {
+    const token = getToken();
+    const response = await axios.get(domain + '/messages', { headers: { Authorization: token }});
+    const userId = response.data.id;
+    const messages = response.data.response;
+    const container = document.querySelector('#chat-bubble-container');
+    container.innerHTML = '';
+    messages.forEach(element => renderMessage(element, userId, container));
+  } catch (err) {
+    console.log(err);
+  }
+};
+window.addEventListener('DOMContentLoaded', refreshMessages);
