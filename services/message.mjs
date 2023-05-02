@@ -9,3 +9,13 @@ export const createMessage = params => {
     return new Promise((resolve, reject) => reject(err));
   }
 };
+
+export const findAllMessages = params => {
+    try {
+        return new Promise((resolve, reject) => {
+          Message.findAll(params).then(response => resolve(response)).catch(err => reject(err));
+        });
+      } catch (err) {
+        return new Promise((resolve, reject) => reject(err));
+      }
+}
