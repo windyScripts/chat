@@ -1,4 +1,4 @@
-module.exports = {
+module.exports= {
     extends: [
       'plugin:import/recommended',
       'eslint:recommended',
@@ -27,6 +27,7 @@ module.exports = {
         SwitchCase: 1,
         flatTernaryExpressions: false,
       }],
+      'import/extensions': ["error", "always", { "mjs": "never" }],
       'no-unused-vars': 'error',
       'prefer-const': 'error',
       semi: 'error',
@@ -87,10 +88,26 @@ module.exports = {
         alphabetize: { order: 'asc', caseInsensitive: true },
       }],
     },
+    overrides: [
+      {
+        files: ['**/*.mjs'],
+        parserOptions: {
+          ecmaVersion: 2022,
+          sourceType: 'module',
+        },
+        env: {
+          node: true,
+        },
+        rules: {
+          // rules specific to .mjs files
+          'no-console': 'off',
+        },
+      },
+    ],
     settings: {
       'import/resolver': {
         node: {
-          extensions: ['.js', '.jsx'],
+          extensions: ['.js', '.jsx', '.mjs'],
         },
       },
     },
