@@ -1,3 +1,5 @@
+import { Op } from 'sequelize';
+
 import { createMessage, findAllMessages } from '../services/message.mjs';
 
 export const addMessage = async (req, res) => {
@@ -13,8 +15,8 @@ export const addMessage = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try {
-    const response =  await findAllMessages();
-    console.log(response);
+    console.log(req.query.loadFromId);
+    const response =  await findAllMessages({ where: { id: { [Op.gt]: req.query.loadFromId }}});
     return res.status(200).json({ response, id: req.user.id });
   } catch (err) {
     console.log(err);
