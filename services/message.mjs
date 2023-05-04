@@ -10,12 +10,16 @@ export const createMessage = params => {
   }
 };
 
-export const findAllMessages = params => {
-  try {
-    return new Promise((resolve, reject) => {
-      Message.findAll(params).then(response => resolve(response)).catch(err => reject(err));
-    });
-  } catch (err) {
-    return new Promise((resolve, reject) => reject(err));
+export const findGroupMessages = (params, group) => {
+  if (group) {
+    try {
+      return new Promise((resolve, reject) => {
+        group.getMessages(params).then(response => resolve(response)).catch(err => reject(err));
+      });
+    } catch (err) {
+      return new Promise((resolve, reject) => reject(err));
+    }
+  } else {
+    throw new Error('No group selected');
   }
 };
