@@ -2,13 +2,18 @@ import Sequelize from 'sequelize';
 
 import sequelize from '../util/database.mjs';
 
-const userGroup = sequelize.define('userGroup', {
+const UserGroupRelation = sequelize.define('UserGroupRelation', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
-    notNull: true,
+    allowNull: false,
     primaryKey: true,
+  },
+  role: {
+    type: Sequelize.STRING,
+    allowNull: false,
+    defaultValue: 'User',
   },
 });
 
-export default userGroup;
+export default UserGroupRelation;

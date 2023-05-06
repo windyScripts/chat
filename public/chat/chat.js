@@ -19,17 +19,19 @@ const getToken = () => {
   }
 };
 
-const inputButton = document.querySelector('#inputButton');
-const addMessage = async e => {
+const inputButton = document.getElementById('inputButton');
+const sendMessage = async e => {
   e.preventDefault();
-  const inputMessageField = document.querySelector('#input');
+  const inputMessageField = document.getElementById('input');
   const message = inputMessageField.value;
+  const messageContainer = document.getElementById('chat-bubble-container')
+  const groupId = messageContainer.getAttribute('data-id');
   const token = getToken();
-  await axios.post(domain + '/message', { message }, { headers: { Authorization: token }});
+  await axios.post(domain + '/group/message', { message, groupId }, { headers: { Authorization: token }});
   inputMessageField.value = '';
   await refreshMessages();
 };
-inputButton.addEventListener('click', addMessage);
+inputButton.addEventListener('click', sendMessage);
 
 const renderMessage = (element, container) => {
   const outgoingOrIncoming = element.user;
@@ -40,7 +42,7 @@ const renderMessage = (element, container) => {
   chatBubble.className = 'chat-bubble ' + (outgoingOrIncoming ? 'outgoing' : 'incoming');
 
   const messageContent = document.createElement('p');
-  messageContent.appendChild(document.createTextNode(element.message));
+  messageContent.appendChild(document.createTextNode(element.dataValues.message));
 
   chatBubble.appendChild(messageContent);
 
@@ -48,25 +50,38 @@ const renderMessage = (element, container) => {
   container.appendChild(incomingMessageTemplate);
 };
 
-const refreshMessages = async e => {
+const refreshMessages = async () => {
   try {
-    //to reset message cache: localStorage.setItem('messages',null)
-    const messageCache = JSON.parse(localStorage.getItem(`${e.target.name} message cache`));
+    const messageContainer = document.getElementById('chat-bubble-container');
+    messageContainer.innerHTML='';
+    const groupId = messageContainer.getAttribute('data-id');
+    console.log(groupId)
+    //to reset message cache: 
+    localStorage.setItem(`${groupId} message cache`,null)
+    const messageCache = JSON.parse(localStorage.getItem(`${groupId} message cache`));
+    console.log(messageCache);
     let lastLocalId = 0;
-    if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1].hasOwnProperty('id'))
-      lastLocalId = messageCache[messageCache.length - 1].id;
+    if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1] && messageCache[messageCache.length - 1].dataValues.hasOwnProperty('id'))
+      lastLocalId = messageCache[messageCache.length - 1].dataValues.id;
 
     const token = getToken();
-    const groupId = e.target.getAttribute('data-id');
-    //const response = await axios.get(domain + '/messages', { headers: { Authorization: token }, params: { loadFromId: lastLocalId }});
-    const response = await axios.post(domain + '/group/messages', { groupId }, { headers: { Authorization: token }, params: { loadFromId: lastLocalId }});
-
-    const messages = response.data.messages;
-
+    
+    
+    
+    const response = await axios.get(domain + `/group/${groupId}/messages`, { headers: { Authorization: token }, params: { loadFromId: lastLocalId }});
+    console.log(response);
+    const messages = response.data.messagesWithUser;
+    console.log(messages);
     const container = document.querySelector('#chat-bubble-container');
     container.innerHTML = '';
-    messageCache.forEach(element => renderMessage(element, container));
-    messages.forEach(element => renderMessage(element, container));
+    console.log(messageCache,messages)
+    if(messageCache){
+        messageCache.forEach(element => renderMessage(element, container));
+    }
+    if(messages){
+        messages.forEach(element => renderMessage(element, container));
+    }
+    
 
     const cachableMessages = [];
     if (messageCache) {
@@ -76,14 +91,14 @@ const refreshMessages = async e => {
         }
       }
     }
-    //console.log(cachableMessages);
+    if(messages){
     for (let i = 0; i < messages.length; i++) {
       cachableMessages.push(messages[i]);
     }
-    //console.log(cachableMessages, 'cachableMessages');
+}
     const newCache = cachableMessages.length > 10 ? cachableMessages.slice(cachableMessages.length - 10) : cachableMessages;
 
-    localStorage.setItem(`${e.target.name} message cache`, JSON.stringify(newCache));
+    localStorage.setItem(`${groupId} message cache`, JSON.stringify(newCache));
   } catch (err) {
     console.log(err);
   }
@@ -91,9 +106,12 @@ const refreshMessages = async e => {
 
 const groupsContainer = document.getElementById('groupsContainer');
 const loadGroupMessages = async e => {
+    console.log(e.target);
   if (e.target.classList.contains('group')) {
     try {
-      refreshMessages(e);
+      const messageContainer = document.getElementById('chat-bubble-container');
+      messageContainer.setAttribute('data-id', e.target.getAttribute('data-id'));
+      refreshMessages();
     } catch (err) {
       console.log(err);
     }
@@ -104,10 +122,10 @@ groupsContainer.addEventListener('click', loadGroupMessages);
 //setInterval(refreshMessages,1000);
 
 const groupDetailsModal = document.getElementById('groupDetailsModal');
-const groupNameInput = document.getElementById('groupDetailsModalLabel');
 
-// this is from https://getbootstrap.com/docs/5.0/components/modal/ , still not sure what it's supposed to do.
+// adds focus to the textbox.
 groupDetailsModal.addEventListener('shown.bs.modal', function () {
+  const groupNameInput = document.getElementById('groupDetailsInput');
   groupNameInput.focus();
 });
 
@@ -121,6 +139,9 @@ const createGroup = async () => {
     await axios.post(domain + '/group/new', {
       name: groupName,
     }, { headers: { Authorization: token }});
+    const closeModalButton = document.getElementById("groupDetailsClose");
+    closeModalButton.click();
+    PageRefresh()
   } catch (err) {
     console.log(err);
   }
@@ -139,24 +160,9 @@ const getCurrentUserGroups = async () => {
   }
 };
 
-const removeUserFromGroup = async() => {
-  try {
-    // build admin system first
-  } catch (err) {
 
-  }
-};
 
-const inviteUserToGroup = async() => {
-  try {
-    // build invite system first
-
-  } catch (err) {
-
-  }
-};
-
-const onPageRefresh = async() => {
+const PageRefresh = async() => {
   try {
     const groups = await getCurrentUserGroups();
     renderUserGroups(groups);
@@ -164,7 +170,7 @@ const onPageRefresh = async() => {
     console.log(err);
   }
 };
-window.addEventListener('DOMContentLoaded', onPageRefresh);
+window.addEventListener('DOMContentLoaded', PageRefresh);
 
 const renderUserGroups = groups => {
   console.log(groups);
@@ -175,13 +181,11 @@ const renderUserGroups = groups => {
       groups.forEach(e => {
         const group = document.createElement('div');
         const groupName = document.createElement('div');
-        groupName.className = 'card-body';
-        const paragraphNode = document.createElement('p');
-        paragraphNode.appendChild(document.createTextNode(e.name));
-        groupName.appendChild(paragraphNode);
+        groupName.className = 'card-body group';
+        groupName.appendChild(document.createTextNode(e.name));;
         group.appendChild(groupName);
-        group.className = 'card group';
-        group.setAttribute('data-id', e.id);
+        group.className = 'card';
+        groupName.setAttribute('data-id', e.id);
         groupsContainer.appendChild(group);
       });
     } catch (err) {
@@ -190,12 +194,91 @@ const renderUserGroups = groups => {
   }
 };
 
-/*                 <div class="card" style="width: 18rem;">
-                    <img src="..." class="card-img-top" alt="...">
-                    <div class="card-body">
-                        <h5 class="card-title">Card title</h5>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk
-                            of the card's content.</p>
-                        <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div> */
+
+const addUserButtonL = document.getElementById('addUserL');
+const addUserButtonS = document.getElementById('addUserS');
+const addUserToGroup = async() => {
+  try {
+    const messageContainer = document.getElementById('chat-bubble-container');
+    const groupId = messageContainer.getAttribute('data-id');
+
+  } catch (err) {
+    console.log(err);
+  }
+};
+addUserButtonL.addEventListener('click', addUserToGroup);
+addUserButtonS.addEventListener('click', addUserToGroup);
+
+const removeUserButtonS = document.getElementById('removeUserS');
+const removeUserButtonL = document.getElementById('removeUserL');
+const getUserToRemoveFromGroup = async() => {
+  try {
+    const messageContainer = document.getElementById('chat-bubble-container');
+    const groupId = messageContainer.getAttribute('data-id');
+    const response = await axios.get(domain+`/group/${groupId}/users`)
+    const userList = response.data
+    const userListContainer = document.getElementById('userListContainer')
+    const userIdHolder = document.getElementById('selectedUserId')
+    userList.map(e,i =>{
+        const radio = document.createElement('input');
+        const radioContainer = document.createElement('div');
+        const radioLabel = document.createElement('label');
+  radio.type = 'radio';
+  radio.name = 'userList'; // Set the name attribute to group the radio buttons
+  radio.className = "form-check-input"
+  radioLabel.className = "form-check-label"
+  radioContainer.className = "form-check"
+  radioLabel.innerText = e.name;
+  radio.setAttribute('data-id',e.id)
+  radio.id = i;
+  radioLabel.for=i
+  radioContainer.appendChild(radio)
+  radioContainer.appendChild(radioLabel)
+  radio.onclick = () => {userIdHolder.textContent = radio.getAttribute('data-id')}
+  userListContainer.appendChild(radioContainer)
+    });
+    
+    userListSubmitButton.setAttribute('action','removeUser');
+    const modalOpener = document.createElement('button');
+    modalOpener.setAttribute( "data-bs-toggle","modal")
+    modalOpener.setAttribute("data-bs-target","#userListModal")
+    modalOpener.click();
+
+    
+    console.log('get list of users, show it on a modal and have them select one or more users to remove');
+  } catch (err) {
+    console.log(err);
+  }
+};
+removeUserButtonS.addEventListener('click', getUserToRemoveFromGroup);
+removeUserButtonL.addEventListener('click', getUserToRemoveFromGroup);
+
+const userListSubmitButton = document.getElementById('userListSubmit')
+getAction = async (e) => {
+    try{
+    const action = e.getAttribute('action')
+    if(action===removeUser){
+        const groupId = messageContainer.getAttribute('data-id');
+        const userId = document.getElementById('selectedUserId').value;
+        const response = await axios.delete(domain+`/${groupId}/${userId}`)
+        console.log(response);
+    }
+}catch(err){
+    console.log(err);
+}
+}
+
+userListSubmitButton.addEventListener('click',getAction)
+
+
+
+const adminUserButton = document.getElementById('adminUser');
+const makeUserGroupAdmin = async() => {
+  try {
+    const messageContainer = document.getElementById('chat-bubble-container');
+    const groupId = messageContainer.getAttribute('data-id');
+    console.log('modify usergroup.');
+  } catch (err) {
+    console.log(err);
+  }
+};

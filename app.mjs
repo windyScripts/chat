@@ -13,10 +13,9 @@ dotenv.config();
 
 import Group from './models/group.mjs';
 import Message from './models/message.mjs';
-import UserGroup from './models/user-group.mjs';
+import UserGroupRelation from './models/user-group.mjs';
 import User from './models/user.mjs';
 import groupRoutes from './routes/group.mjs';
-import messageRoutes from './routes/message.mjs';
 import authRoutes from './routes/user.mjs';
 import sequelize from './util/database.mjs';
 
@@ -24,8 +23,8 @@ User.hasMany(Message);
 
 Group.hasMany(Message);
 
-User.belongsToMany(Group, { through: UserGroup });
-Group.belongsToMany(User, { through: UserGroup });
+User.belongsToMany(Group, { through: UserGroupRelation });
+Group.belongsToMany(User, { through: UserGroupRelation });
 
 const app = express();
 const environment = process.env.NODE_ENV;
@@ -41,9 +40,10 @@ if (environment === 'production') {
   const compression = require('compression');
   app.use(compression());
 } else if (environment === 'development') {
+  /* app.use(cors); */
   app.use(cors({
     origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST','PATCH','DELETE'],
   }));
 }
 
@@ -58,7 +58,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use('/auth', authRoutes);
-app.use('/', messageRoutes);
 app.use('/group', groupRoutes);
 
 /* app.use((req, res) => {

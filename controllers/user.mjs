@@ -15,7 +15,7 @@ function invalid(...params) {
   return false;
 }
 
-export const addUser = async (req, res) => {
+export const signUpUser = async (req, res) => {
   const checkInvalid = invalid(req.body.userName, req.body.email, req.body.password);
   const existingUser = Boolean(await findOneUser({ where: { email: req.body.email }}));
   if (checkInvalid === true) {

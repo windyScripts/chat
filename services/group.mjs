@@ -20,12 +20,13 @@ export const findGroup = params => {
   }
 };
 
-/* export const findAllGroups = (params) => {
+export const findGroupUsers = group => {
     try {
-        return new Promise((resolve, reject) => {
-          Group.findAll(params).then(response => resolve(response)).catch(err => reject(err));
-        });
-      } catch (err) {
-        return new Promise((resolve, reject) => reject(err));
-      }
-} */
+      return new Promise((resolve, reject) => {
+        group.getUsers().then(response => resolve(response)).catch(err => reject(err));
+      });
+    } catch (err) {
+      return new Promise((resolve, reject) => reject(err));
+    }
+  };
+
