@@ -1,7 +1,8 @@
 import { Router } from 'express';
 
-const router = Router();
 import { signUpUser, login } from '../controllers/user.mjs';
+
+const router = Router();
 
 router.post('/new', signUpUser);
 router.post('/login', login);

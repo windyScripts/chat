@@ -16,7 +16,8 @@ export const addGroup = async (req, res) => {
     const userId = req.user.id;
     const name = req.body.name;
     const group = await createGroup({ createdBy, userId, name });
-    const response = await addUserToGroup(req.user, group, { role: 'Admin' }); 
+    const response = await addUserToGroup(req.user, group, { role: 'Admin' });
+    const adminResponse = await makeUserAdmin(userId,group.id)
     return res.status(200).json({ message: `group ${name} created successfully.`, response });
   } catch (err) {
     console.log(err);
@@ -88,10 +89,10 @@ export const verifyAndRemoveUserFromGroup = async (req, res) => {
     const groupId = req.params.groupId;
     const userPromise = findOneUser({ where: { id: userId }});
     const groupPromise = findGroup({ where: { id: groupId }});
-    const adminStatusPromise = checkAdmin(userId, groupId);
+    const adminStatusPromise = checkAdmin(req.user.id, groupId);
     const results = await Promise.all([userPromise, groupPromise, adminStatusPromise]);
     if (results[0] && results[1] && results[2]) {
-      response = await removeUserFromGroup(results[0], results[1]);
+      const response = await removeUserFromGroup(results[0], results[1]);
       res.status(200).json(response);
     } else throw new Error('Invalid user or group');
   } catch (err) {
@@ -102,14 +103,17 @@ export const verifyAndRemoveUserFromGroup = async (req, res) => {
 
 export const getUserandGroupthenAdd = async (req, res) => {
   try {
+  
     const userId = req.params.userId;
     const groupId = req.params.groupId;
+    console.log(userId, groupId)
     const userPromise = findOneUser({ where: { id: userId }});
     const groupPromise = findGroup({ where: { id: groupId }});
-    const adminStatusPromise = checkAdmin(userId, groupId);
+    const adminStatusPromise = checkAdmin(req.user.id, groupId);
     const results = await Promise.all([userPromise, groupPromise, adminStatusPromise]);
+    console.log(results[2])
     if (results[0] && results[1] && results[2]) {
-      response = await addUserToGroup(results[0], results[1]);
+      const response = await addUserToGroup(results[0], results[1]);
       res.status(200).json(response);
     } else throw new Error('Invalid user or group');
   } catch (err) {

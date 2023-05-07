@@ -30,3 +30,14 @@ export const findGroupUsers = group => {
     }
   };
 
+ 
+
+  export const deleteGroup = group => {
+    try {
+      return new Promise((resolve, reject) => {
+        group.destroy() .then(response => resolve(response)).catch(err => reject(err));
+      });
+    } catch (err) {
+      return new Promise((resolve, reject) => reject(err));
+    }
+  };

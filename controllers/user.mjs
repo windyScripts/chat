@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import { createUser, findOneUser } from '../services/user.mjs';
+import { checkAdmin, removeUserFromGroup, findOldestUserOrReturnNull, makeUserAdmin } from '../services/user-group-relation.mjs';
+import { findGroup, deleteGroup } from '../services/group.mjs';
+import { Op } from 'sequelize';
 
 function generateAccessToken(id) {
   const iat = new Date;
@@ -51,3 +54,33 @@ export const login = async (req, res) => {
     console.log(err);
   }
 };
+
+export const leaveGroup = async (req, res) => {
+  try{
+    
+    const user = req.user;
+    const groupId = req.params.groupId;
+    
+    const p1 = findGroup({where:{id:groupId}})
+    const p2 = checkAdmin(user.id,groupId);
+    const [group,adminStatus] = await Promise.all([p1,p2])
+    
+    const p3 =  removeUserFromGroup(user,group);
+    const p4 =  findOldestUserOrReturnNull(group,{where:{id:{[Op.not]: user.id}}});
+    const [,oldestUser] = await Promise.all([p3,p4])
+    
+    console.log(oldestUser);
+
+    if(adminStatus===true&&oldestUser!==null){
+     await makeUserAdmin(oldestUser.dataValues.id,groupId)
+    }
+ 
+    if(oldestUser === null) {
+      await deleteGroup(group);
+    }
+
+    return res.status(200).json({message:'Success'})
+  }catch(err){
+console.log(err);
+  }
+}

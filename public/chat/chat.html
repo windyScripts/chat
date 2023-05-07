@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <!-- data-bs-theme="dark" -->
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,32 +17,53 @@
     <title>Chat app</title>
 </head>
 
-<body class="container-fluid" >
+<body class="container-fluid">
     <header class="row vessel">
         <div class=" col-5 left d-inline-block flex-grow-2 flex-shrink-2">
-            <button class="darkButton btn toolbar" data-bs-toggle="modal" data-bs-target="#groupDetailsModal">create
+            <div class="dropdown-container">
+                <div class="btn-group">
+                    <button type="button" class="btn toolbar darkButton dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Group +/-
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu">
+                        <li><button class="darkButton dropdown-item btn toolbar" id="createGroupS">create
+                            group</button></li>
+                        <li> <button class="darkButton dropdown-item btn toolbar" id="leaveGroupS">leave
+                            group</button>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="button-container">
+            <button class="darkButton btn toolbar" id="createGroupL">create
                 group</button>
-                <button class="darkButton btn toolbar" id="toggleMode"><object class="svg" data="./icons/moon-stars-fill.svg"></object></button>
+            <button class="darkButton btn toolbar" id="leaveGroupL">leave
+                group</button>
+        </div>
         </div>
         <div class="absoluteElementContainer col-7 right d-inline-block flex-grow-4 flex-shrink-3">
-            <div id="dropdown-container">
+            <div class="dropdown-container">
                 <div class="btn-group">
                     <button type="button" class="btn toolbar darkButton dropdown-toggle" data-bs-toggle="dropdown"
                         aria-expanded="false">
                         Admin
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-dark">
+                    <ul class="dropdown-menu dropdown-menu">
                         <li><button class="darkButton dropdown-item btn toolbar" id="addUserS">Add user</button></li>
-                        <li> <button class="darkButton dropdown-item btn toolbar" id="removeUserS">Remove user</button></li>
-                        <li> <button class="darkButton dropdown-item btn toolbar">Make Admin</button></li>
+                        <li> <button class="darkButton dropdown-item btn toolbar" id="removeUserS">Remove user</button>
+                        </li>
+                        <li> <button class="darkButton dropdown-item btn toolbar" id="adminUserS">Make Admin</button>
+                        </li>
                     </ul>
                 </div>
 
             </div>
-            <div id="button-container">
+            <div class="button-container">
                 <button class="darkButton btn toolbar" id="addUserL">Add user</button>
                 <button class="darkButton btn toolbar" id="removeUserL">Remove user</button>
-                <button class="darkButton btn toolbar">Make Admin</button>
+                <button class="darkButton btn toolbar" id="adminUserL">Make Admin</button>
             </div>
             <div class="d-inline-block flex-grow-0 flex-shrink-0 logout-btn">
                 <button class="darkButton btn toolbar" id="logout">Log out</button>
@@ -51,26 +73,28 @@
     </header>
     <div class="row row-cols-2 vessel">
         <section id="sidebar" class="col-5 d-inline-block flex-grow-2 flex-shrink-2 left">
-            <section id="createGroup">
-
-                <div class="modal fade" id="groupDetailsModal" tabindex="-1" aria-labelledby="groupDetailsModalLabel"
+            <section>
+                <button hidden id="textInputModalButton" data-bs-toggle="modal"
+                    data-bs-target="#textInputModal"></button>
+                <div class="modal fade" id="textInputModal" tabindex="-1" aria-labelledby="textInputModalLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="groupDetailsModalLabel">Enter your group's name.</h5>
+                                <h5 class="modal-title" id="textInputModalLabel"></h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
                                 <form action="">
-                                    <input type="text" id="groupDetailsInput" class="form-control" maxlength=20>
+                                    <input type="text" id="textInput" class="form-control" maxlength=20>
                                 </form>
 
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" id="groupDetailsClose" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" id="groupDetailsSubmit">Save
+                                <button type="button" class="btn btn-secondary" id="textInputClose"
+                                    data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="textInputSubmit">Save
                                     changes</button>
                             </div>
                         </div>
@@ -78,6 +102,7 @@
                 </div>
             </section>
             <section>
+                <button hidden id="userListModalButton" data-bs-toggle="modal" data-bs-target="#userListModal"></button>
                 <div class="modal fade" id="userListModal" tabindex="-1" aria-labelledby="userListModalLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
@@ -88,7 +113,10 @@
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <form action="" id="userListContainer">
+                                <form action="">
+                                    <div id="userListContainer">
+
+                                    </div>
                                     <input type="text" hidden id="selectedUserId">
                                 </form>
 
