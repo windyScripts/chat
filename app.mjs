@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -8,9 +9,11 @@ import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { Server } from 'socket.io';
 
 dotenv.config();
 
+import { getSocketId, getUserSocket } from './controllers/socket-io.mjs';
 import Group from './models/group.mjs';
 import Message from './models/message.mjs';
 import UserGroupRelation from './models/user-group.mjs';
@@ -40,10 +43,10 @@ if (environment === 'production') {
   const compression = require('compression');
   app.use(compression());
 } else if (environment === 'development') {
-  /* app.use(cors); */
+/*   app.use(cors); */
   app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST','PATCH','DELETE'],
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   }));
 }
 
@@ -60,14 +63,55 @@ app.use(bodyParser.json());
 app.use('/auth', authRoutes);
 app.use('/group', groupRoutes);
 
-/* app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'public', req.url));
-  }); */
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, 'public', req.url));
+});
+
+const httpServer = createServer(app);
 
 async function start() {
   await sequelize.sync();
   console.log('Database connected. :)');
-  app.listen(process.env.PORT || 3000);
+  httpServer.listen(process.env.PORT || 3000);
 }
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    allowedHeaders: ['Authorization'],
+  },
+});
+
+io.on('connection', socket => {
+  const token = socket.handshake.headers.authorization;
+  socket.id = getSocketId(token);
+  socket.on('join-room', (room, cb) => {
+    socket.join(room);
+    cb(`Connected to ${room}`);
+  });
+  socket.on('leave-room', (room, cb) => {
+    socket.leave(room);
+    cb(`Left ${room}`);
+  });
+  socket.on('send-message', (message, room = null) => {
+    if (room) {
+      socket.to(room).emit('receive-message', message, room);
+    }
+  });
+  socket.on('add user', (userId, room) => {
+    const userSocketId = getUserSocket(userId);
+    userSocketId.join(room);
+    socket.to(userSocketId).emit('refresh');
+  });
+  socket.on('remove user', (userId, room) => {
+    const userSocketId = getUserSocket(userId);
+    userSocketId.leave(room);
+    socket.to(userSocketId).emit('refresh');
+  });
+  socket.on('admin user', userId => {
+    const userSocketId = getUserSocket(userId);
+    socket.to(userSocketId).emit('refresh');
+  });
+});
 
 start();

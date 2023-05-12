@@ -27,7 +27,7 @@ module.exports= {
         SwitchCase: 1,
         flatTernaryExpressions: false,
       }],
-      'import/extensions': ["error", "always", { "mjs": "never" }],
+      'import/extensions': ["error", "ignorePackages", { "mjs": "always", "js": "never" }],
       'no-unused-vars': 'error',
       'prefer-const': 'error',
       semi: 'error',

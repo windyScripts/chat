@@ -1,11 +1,12 @@
 import Message from '../models/message.mjs';
 
-export const createMessage = params => {
+export const createMessage = async (params, transaction = null) => {
   try {
     return new Promise((resolve, reject) => {
-      Message.create(params).then(response => resolve(response)).catch(err => reject(err));
+      Message.create(params, { transaction }).then(response => resolve(response)).catch(err => reject(err));
     });
   } catch (err) {
+    if (transaction) await transaction.rollback();
     return new Promise((resolve, reject) => reject(err));
   }
 };

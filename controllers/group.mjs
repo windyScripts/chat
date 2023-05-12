@@ -1,14 +1,11 @@
 
-
-import { createGroup, findGroupUsers } from '../services/group.mjs';
-import { getUserGroups } from '../services/user.mjs';
-import { createMessage } from '../services/message.mjs';
 import { Op } from 'sequelize';
-import { findGroupMessages } from '../services/message.mjs';
-import { findGroup } from '../services/group.mjs';
-import { removeUserFromGroup, addUserToGroup, checkAdmin, makeUserAdmin } from '../services/user-group-relation.mjs';
-import { findOneUser } from '../services/user.mjs';
 
+import { createGroup, findGroupUsers, findGroup } from '../services/group.mjs';
+import { findGroupMessages, createMessage } from '../services/message.mjs';
+import { removeUserFromGroup, addUserToGroup, checkAdmin, makeUserAdmin, updateGroupLastMessageTime } from '../services/user-group-relation.mjs';
+import { getUserGroups, findOneUser } from '../services/user.mjs';
+import sequelize from '../util/database.mjs';
 
 export const addGroup = async (req, res) => {
   try {
@@ -17,7 +14,7 @@ export const addGroup = async (req, res) => {
     const name = req.body.name;
     const group = await createGroup({ createdBy, userId, name });
     const response = await addUserToGroup(req.user, group, { role: 'Admin' });
-    const adminResponse = await makeUserAdmin(userId,group.id)
+    await makeUserAdmin(userId, group.id);
     return res.status(200).json({ message: `group ${name} created successfully.`, response });
   } catch (err) {
     console.log(err);
@@ -33,66 +30,88 @@ export const getCurrentUserGroups = async (req, res) => {
   }
 };
 
-export const getAllUsersofGroup = async (req,res) => {
-    try{
-        console.log(req.params);
-        const groupId = req.params.groupId;
-        const group = await findGroup({where: { id: groupId }});
-        const users = await findGroupUsers(group)
-        return res.status(200).json(users);
-    }
-    catch(err){
-        console.log(err);
-    }
-}
+export const getAllUsersofGroup = async (req, res) => {
+  try {
+    console.log(req.params);
+    const groupId = req.params.groupId;
+    const group = await findGroup({ where: { id: groupId }});
+    const users = await findGroupUsers(group);
+    return res.status(200).json(users);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getOtherUsersofGroup = async (req, res) => {
+  try {
+    console.log(req.params);
+    const groupId = req.params.groupId;
+    const group = await findGroup({ where: { id: groupId }});
+    const users = await findGroupUsers(group, {
+      where: {
+        id: {
+          [Op.notIn]: [req.user.id],
+        },
+      },
+    });
+    return res.status(200).json(users);
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const addMessage = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const groupId = req.body.groupId
-      const message = req.body.message;
-      await createMessage({userId, message,groupId });
-      return res.status(200).json({ message: 'Message sent successfully' });
-    } catch (err) {
-      console.log(err);
+  const t = await sequelize.transaction();
+  try {
+    const userId = req.user.id;
+    const groupId = req.body.groupId;
+    const message = req.body.message;
+    const p1 = createMessage({ userId, message, groupId }, t);
+    const p2 = updateGroupLastMessageTime({ where: { groupId, userId }}, t);
+    await Promise.all([p1, p2]);
+    await t.commit();
+    return res.status(200).json({ message: 'Message sent successfully' });
+  } catch (err) {
+    await t.rollback();
+    console.log(err);
+  }
+};
+
+export const getMessages = async (req, res) => {
+  try {
+    const userGroupsPromise = getUserGroups(req.user);
+    const groupPromise = findGroup({ where: { id: req.params.groupId }});
+    const result = await Promise.all([userGroupsPromise, groupPromise]);
+    const group = result[1];
+    console.log(req.params.groupId, group);
+    if (result[0].every(e => e.id != group.id)) {
+      return res.status(401).json({ message: 'unauthorized request' });
     }
-  };
-  
-  export const getMessages = async (req, res) => {
-      try {
-        const userGroupsPromise = getUserGroups(req.user);
-        const groupPromise = findGroup({where: { id: req.params.groupId }});
-        const result = await Promise.all([userGroupsPromise, groupPromise]);
-        const group = result[1];
-        console.log(req.params.groupId,group);
-        if (result[0].every(e => e.id != group.id)) {
-          return res.status(401).json({ message: 'unauthorized request' });
-        }
-    
-        const messages =  await findGroupMessages({ where: { id: { [Op.gt]: req.query.loadFromId }}}, group);
-        const messagesWithUser = messages.map(record => {
-          if (record.userId === req.user.id) {
-            return { ...record, user: true };
-          } else {
-            return record;
-          }
-        });
-        return res.status(200).json({ messagesWithUser, id: req.user.id });
-      } catch (err) {
-        console.log(err);
+
+    const messages =  await findGroupMessages({ where: { id: { [Op.gt]: req.query.loadFromId }}}, group);
+    const messagesWithUser = messages.map(record => {
+      if (record.userId === req.user.id) {
+        return { ...record, user: true };
+      } else {
+        return record;
       }
-    };
+    });
+    return res.status(200).json({ messagesWithUser, id: req.user.id });
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 export const verifyAndRemoveUserFromGroup = async (req, res) => {
   try {
     const userId = req.params.userId;
     const groupId = req.params.groupId;
-    const userPromise = findOneUser({ where: { id: userId }});
-    const groupPromise = findGroup({ where: { id: groupId }});
-    const adminStatusPromise = checkAdmin(req.user.id, groupId);
-    const results = await Promise.all([userPromise, groupPromise, adminStatusPromise]);
-    if (results[0] && results[1] && results[2]) {
-      const response = await removeUserFromGroup(results[0], results[1]);
+    const p1 = findOneUser({ where: { id: userId }});
+    const p2 = findGroup({ where: { id: groupId }});
+    const p3 = checkAdmin(req.user.id, groupId);
+    const [user, group, adminStatus] = await Promise.all([p1, p2, p3]);
+    if (user && group && adminStatus) {
+      const response = await removeUserFromGroup(user, group);
       res.status(200).json(response);
     } else throw new Error('Invalid user or group');
   } catch (err) {
@@ -103,17 +122,14 @@ export const verifyAndRemoveUserFromGroup = async (req, res) => {
 
 export const getUserandGroupthenAdd = async (req, res) => {
   try {
-  
     const userId = req.params.userId;
     const groupId = req.params.groupId;
-    console.log(userId, groupId)
-    const userPromise = findOneUser({ where: { id: userId }});
-    const groupPromise = findGroup({ where: { id: groupId }});
-    const adminStatusPromise = checkAdmin(req.user.id, groupId);
-    const results = await Promise.all([userPromise, groupPromise, adminStatusPromise]);
-    console.log(results[2])
-    if (results[0] && results[1] && results[2]) {
-      const response = await addUserToGroup(results[0], results[1]);
+    const p1 = findOneUser({ where: { id: userId }});
+    const p2 = findGroup({ where: { id: groupId }});
+    const p3 = checkAdmin(req.user.id, groupId);
+    const [user, group, adminStatus] = await Promise.all([p1, p2, p3]);
+    if (user && group && adminStatus) {
+      const response = await addUserToGroup(user, group);
       res.status(200).json(response);
     } else throw new Error('Invalid user or group');
   } catch (err) {
@@ -131,5 +147,14 @@ export const findAndMakeUserAdmin = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ message: err });
+  }
+};
+
+export const getUserAdminStatus = async (req, res) => {
+  try {
+    const adminStatus = await checkAdmin(req.user.id, req.params.groupId);
+    return res.status(200).json({ adminStatus });
+  } catch (err) {
+    console.log(err);
   }
 };

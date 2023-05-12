@@ -20,7 +20,7 @@ export const findOneUser = params => {
   }
 };
 
-export const getUserGroups = async user => {
+export const getUserGroups = user => {
   try {
     return new Promise((resolve, reject) => {
       user.getGroups().then(groups => {
@@ -31,3 +31,46 @@ export const getUserGroups = async user => {
     return new Promise((resolve, reject) => reject(err));
   }
 };
+
+/* export const updateUserSocketId = (user, socketId) => {
+  try {
+    return new Promise((resolve, reject) => {
+      user.socketId = socketId;
+      user.save().then(() => {
+        resolve(socketId);
+      }).catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+}; */
+
+export const updateUser = async (user, params, transaction = null) => {
+  try {
+    return new Promise((resolve, reject) => {
+      user.update(params, { transaction }).then(() => {
+        resolve(params);
+      }).catch(err => reject(err));
+    });
+  } catch (err) {
+    if (transaction) await transaction.rollback();
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
+
+export const getUserSocketId = userId => {
+  try {
+    return new Promise((resolve, reject) => {
+      User.findOne({ where: { id: userId }}).then(response => {
+        if (response !== null) {
+          resolve(response.socketId);
+        } else {
+          resolve(null);
+        }
+      }).catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
+

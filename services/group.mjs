@@ -20,24 +20,23 @@ export const findGroup = params => {
   }
 };
 
-export const findGroupUsers = group => {
-    try {
-      return new Promise((resolve, reject) => {
-        group.getUsers().then(response => resolve(response)).catch(err => reject(err));
-      });
-    } catch (err) {
-      return new Promise((resolve, reject) => reject(err));
-    }
-  };
+export const findGroupUsers = (group, params = null) => {
+  try {
+    return new Promise((resolve, reject) => {
+      group.getUsers(params).then(response => resolve(response)).catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
 
- 
+export const deleteGroup = group => {
+  try {
+    return new Promise((resolve, reject) => {
+      group.destroy() .then(response => resolve(response)).catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
 
-  export const deleteGroup = group => {
-    try {
-      return new Promise((resolve, reject) => {
-        group.destroy() .then(response => resolve(response)).catch(err => reject(err));
-      });
-    } catch (err) {
-      return new Promise((resolve, reject) => reject(err));
-    }
-  };

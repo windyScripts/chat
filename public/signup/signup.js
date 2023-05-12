@@ -9,10 +9,26 @@ const feedback = document.querySelector('#feedback');
 
 // login details
 
-const userNameField = document.querySelector('#name');
-const emailField = document.querySelector('#email');
-const passwordField = document.querySelector('#password');
-const phoneNumberField = document.querySelector('#phone');
+const getSignUpDetails = () => {
+  const userNameField = document.querySelector('#name');
+  const emailField = document.querySelector('#email');
+  const passwordField = document.querySelector('#password');
+  const phoneNumberField = document.querySelector('#phone');
+
+  return [userNameField.value, emailField.value, passwordField.value, phoneNumberField.value];
+};
+
+const clearSignUpFields = () => {
+  const userNameField = document.querySelector('#name');
+  const emailField = document.querySelector('#email');
+  const passwordField = document.querySelector('#password');
+  const phoneNumberField = document.querySelector('#phone');
+
+  userNameField.value = '';
+  passwordField.value = '';
+  emailField.value = '';
+  phoneNumberField.value = '';
+};
 
 // login redirect
 
@@ -33,17 +49,15 @@ async function validateAndSubmitForm(e) {
     if (!form.checkValidity()) {
       form.classList.add('was-validated');
     } else {
+      const [userName, email, password, phone] = getSignUpDetails();
       const entry = {
-        userName: userNameField.value,
-        password: passwordField.value,
-        email: emailField.value,
-        phone: phoneNumberField.value,
+        userName,
+        password,
+        email,
+        phone,
       };
       await axios.post(domain + '/auth/new', entry);
-      userNameField.value = '';
-      passwordField.value = '';
-      emailField.value = '';
-      phoneNumberField.value = '';
+      clearSignUpFields();
       feedback.textContent = 'Success!';
     }
   } catch (err) {

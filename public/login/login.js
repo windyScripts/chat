@@ -4,25 +4,23 @@ const port = 3000;
 const domain = `${scheme}://${hostName}:${port}`; */
 const domain = 'http://localhost:3000';
 
+const getEmailAndPassword = () => {
+  const emailField = document.querySelector('#email');
+  const passwordField = document.querySelector('#password');
+  return [passwordField.value, emailField.value];
+};
+
 const form = document.querySelector('#form');
-const emailField = document.querySelector('#email');
-const passwordField = document.querySelector('#password');
-const signUpButton = document.querySelector('#toSignUp');
-const feedback = document.querySelector('#failMessage');
-const forgotPasswordButton = document.querySelector('#toForgotEmail');
-
-form.addEventListener('submit', validateLogin);
-
-async function validateLogin(e) {
+const validateLogin = async e => {
   e.preventDefault();
   if (!form.checkValidity()) {
     form.classList.add('was-validated');
   } else {
+    const feedback = document.querySelector('#failMessage');
     feedback.textContent = '';
-
+    const [password, email] = getEmailAndPassword();
     const entry = {
-      password: passwordField.value,
-      email: emailField.value,
+      password, email,
     };
     try {
       const response = await axios.post(domain + '/auth/login', entry);
@@ -31,20 +29,22 @@ async function validateLogin(e) {
       localStorage.setItem('token', token);
       window.location.href = '../chat/chat.html';
     } catch (err) {
+      console.log(err);
+
       feedback.textContent = err.response.data.message;
     }
   }
-}
+};
+form.addEventListener('submit', validateLogin);
 
+const signUpRedirect = () => {
+  window.location.href = '../signup/signup.html';
+};
+const signUpButton = document.querySelector('#toSignUp');
 signUpButton.addEventListener('click', signUpRedirect);
 
-function signUpRedirect() {
-  window.location.href = '../signup/signup.html';
-}
-
-forgotPasswordButton.addEventListener('click', forgotPasswordRedirect);
-
-function forgotPasswordRedirect() {
+const forgotPasswordRedirect = () => {
   window.location.href = '../forgot-password/forgot-password.html';
-}
-
+};
+const forgotPasswordButton = document.querySelector('#toForgotEmail');
+forgotPasswordButton.addEventListener('click', forgotPasswordRedirect);

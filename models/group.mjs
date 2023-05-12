@@ -18,11 +18,6 @@ const group = sequelize.define('group', {
     type: Sequelize.INTEGER,
     allowNull: false,
   },
-  lastMessageTime: {
-    type: Sequelize.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.NOW,
-  },
 });
 
 export default group;

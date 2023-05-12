@@ -14,10 +14,11 @@ export const makeUserAdmin = (userId, groupId) => {
   try {
     return new Promise((resolve, reject) => {
       UserGroupRelation.findOne({ where: { userId, groupId }}).then(Relation => {
-        Relation.role = 'Admin';
-        console.log(Relation)
-        Relation.save()
-        resolve(true)
+        if (Relation) {
+          Relation.update({ role: 'Admin' }).then(() => resolve(true));
+        } else {
+          resolve(null);
+        }
       }).catch(err => reject(err));
     });
   } catch (err) {
@@ -40,25 +41,8 @@ export const checkAdmin = (userId, groupId) => {
   try {
     return new Promise((resolve, reject) => {
       UserGroupRelation.findOne({ where: { userId, groupId }}).then(response => {
-        response.role == 'Admin' ? resolve(true) : resolve(false)
-    })
-        .catch(err => reject(err));
-    });
-  } catch (err) {
-    return new Promise((resolve, reject) => reject(err));
-  }
-};
-
-export const findOldestUserOrReturnNull = (group,userparams) => {
-  try {
-    return new Promise((resolve, reject) => {
-      group.getUsers({
-        order: [['createdAt', 'ASC']],
-        limit: 1,
-        ...userparams
-      }).then(Result => {
-        if(Result === null) resolve(null);
-        else resolve(Result[0]);
+        if (response === null) return false;
+        response.role == 'Admin' ? resolve(true) : resolve(false);
       })
         .catch(err => reject(err));
     });
@@ -67,3 +51,49 @@ export const findOldestUserOrReturnNull = (group,userparams) => {
   }
 };
 
+export const findOldestUserOrReturnNull = (group, userparams) => {
+  try {
+    return new Promise((resolve, reject) => {
+      group.getUsers({
+        ...userparams,
+        order: [['createdAt', 'ASC']],
+        limit: 1,
+      }).then(result => {
+        if (result.length === 0) resolve(null);
+        else resolve(result[0]);
+      })
+        .catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
+
+export const checkForGroupAdmin = params => {
+  try {
+    return new Promise((resolve, reject) => {
+      UserGroupRelation.findOne(params).then(result => {
+        if (result === null) resolve(false);
+        else resolve(true);
+      })
+        .catch(err => reject(err));
+    });
+  } catch (err) {
+    return new Promise((resolve, reject) => reject(err));
+  }
+};
+
+export const updateGroupLastMessageTime = async (params, transaction = null) => {
+  try {
+    return new Promise(resolve => {
+      UserGroupRelation.findOne(params, { transaction }).then(relation => {
+        if (relation) {
+          relation.update({ lastMessageTime: new Date() }).then(() => resolve());
+        }
+      });
+    });
+  } catch (err) {
+    if (transaction) await transaction.rollback();
+    return new Promise((resolve, reject) => reject(err));
+  }
+};

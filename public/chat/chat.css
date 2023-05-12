@@ -66,15 +66,13 @@ header{
 
 
 .vessel{
-    max-width: 1200px; /* Set the maximum width of the container */
+    max-width: 1050px; /* Set the maximum width of the container */
     margin: 0 auto; /* Center the container horizontally */
   }
 
 .toolbar{
     height:50px;
 }
-
-
 
 @media screen and (max-width: 750px) {
     .button-container{
@@ -88,12 +86,11 @@ header{
     }
 }
 
-
-
-.inputForm{
+#inputBar{
     position:fixed;
     bottom: 0;
     max-width: 700px;
+    visibility: hidden;
 }
 
 #toggleMode{
@@ -106,7 +103,9 @@ header{
     height: 25px;
 }
 
-
+.admin{
+    visibility: hidden;
+}
 
 /* dark mode stuff */
 
