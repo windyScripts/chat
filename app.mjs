@@ -100,17 +100,23 @@ io.on('connection', socket => {
   });
   socket.on('add user', (userId, room) => {
     const userSocketId = getUserSocket(userId);
-    userSocketId.join(room);
-    socket.to(userSocketId).emit('refresh');
+    if (userSocketId) {
+      userSocketId.join(room);
+      socket.to(userSocketId).emit('refresh');
+    }
   });
   socket.on('remove user', (userId, room) => {
     const userSocketId = getUserSocket(userId);
-    userSocketId.leave(room);
-    socket.to(userSocketId).emit('refresh');
+    if (userSocketId) {
+      userSocketId.leave(room);
+      socket.to(userSocketId).emit('refresh');
+    }
   });
   socket.on('admin user', userId => {
     const userSocketId = getUserSocket(userId);
-    socket.to(userSocketId).emit('refresh');
+    if (userSocketId) {
+      socket.to(userSocketId).emit('refresh');
+    }
   });
 });
 

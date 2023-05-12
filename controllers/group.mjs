@@ -1,8 +1,10 @@
 
 import { Op } from 'sequelize';
 
+import { createDownload } from '../services/downloads.mjs';
 import { createGroup, findGroupUsers, findGroup } from '../services/group.mjs';
 import { findGroupMessages, createMessage } from '../services/message.mjs';
+import { uploadtoS3 } from '../services/S3-services.mjs';
 import { removeUserFromGroup, addUserToGroup, checkAdmin, makeUserAdmin, updateGroupLastMessageTime } from '../services/user-group-relation.mjs';
 import { getUserGroups, findOneUser } from '../services/user.mjs';
 import sequelize from '../util/database.mjs';
@@ -122,15 +124,15 @@ export const verifyAndRemoveUserFromGroup = async (req, res) => {
 
 export const getUserandGroupthenAdd = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const email = req.params.email;
     const groupId = req.params.groupId;
-    const p1 = findOneUser({ where: { id: userId }});
+    const p1 = findOneUser({ where: { email }});
     const p2 = findGroup({ where: { id: groupId }});
     const p3 = checkAdmin(req.user.id, groupId);
     const [user, group, adminStatus] = await Promise.all([p1, p2, p3]);
     if (user && group && adminStatus) {
-      const response = await addUserToGroup(user, group);
-      res.status(200).json(response);
+      await addUserToGroup(user, group);
+      res.status(200).json({ userId: user.id });
     } else throw new Error('Invalid user or group');
   } catch (err) {
     console.log(err);
@@ -142,6 +144,7 @@ export const findAndMakeUserAdmin = async (req, res) => {
   try {
     const userId = req.params.userId;
     const groupId = req.params.groupId;
+    console.log(userId, groupId);
     const response = await makeUserAdmin(userId, groupId);
     res.status(200).json(response);
   } catch (err) {
@@ -156,5 +159,22 @@ export const getUserAdminStatus = async (req, res) => {
     return res.status(200).json({ adminStatus });
   } catch (err) {
     console.log(err);
+  }
+};
+
+export const getFileLink = async (req, res) => {
+  try {
+    const file = req.body.file;
+
+    const userId = req.user.id;
+    const timeStamp = new Date();
+    const fileName = `${userId}/${timeStamp}`;
+    const fileUrl = await uploadtoS3(file, fileName);
+    await createDownload({
+      url: fileUrl,
+    });
+    res.status(200).json({ fileUrl, success: true });
+  } catch (err) {
+    res.status(500).json({ fileUrl: '', success: false, message: err });
   }
 };

@@ -1,4 +1,6 @@
-import { S3 } from 'aws-sdk';
+import AWS from 'aws-sdk';
+
+const { S3 } = AWS;
 
 export const uploadtoS3 = async (data, fileName) => {
   try {

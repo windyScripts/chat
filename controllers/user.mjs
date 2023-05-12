@@ -4,7 +4,7 @@ import { Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 
 import { findGroup, deleteGroup } from '../services/group.mjs';
-import { newPasswordRequest, findOnePasswordRequest, updatePasswordRequest } from '../services/password-services.mjs';
+import { newPasswordRequest, findOnePasswordRequest, updatePasswordRequest } from '../services/passwords.mjs';
 import { sendEmail } from '../services/Sib-services.mjs';
 import { checkAdmin, removeUserFromGroup, findOldestUserOrReturnNull, makeUserAdmin, checkForGroupAdmin } from '../services/user-group-relation.mjs';
 import { createUser, findOneUser, updateUser } from '../services/user.mjs';

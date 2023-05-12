@@ -51,9 +51,9 @@ const showAdmin = () => {
 };
 const hideAdmin = () => {
   const hidden = document.getElementsByClassName('admin');
-  hidden.forEach(() => {
-    hidden.style.visibility = 'hidden';
-  });
+  for (let i = 0; i < hidden.length; i++) {
+    hidden[i].style.visibility = 'hidden';
+  }
 };
 
 const inputButton = document.getElementById('inputButton');
@@ -99,9 +99,9 @@ const refreshMessages = async () => {
       const adminResponse = await axios.get(domain + `/group/${groupId}/userAdminStatus`, { headers: { Authorization: token }});
       const adminStatus = adminResponse.data.adminStatus;
       if (adminStatus === true) {
-        showAdmin;
+        showAdmin();
       } else {
-        hideAdmin;
+        hideAdmin();
       }
 
       //to reset message cache:
@@ -150,7 +150,6 @@ const refreshMessages = async () => {
 
 const groupsContainer = document.getElementById('groupsContainer');
 const loadGroupMessages = async e => {
-  console.log(e.target);
   if (e.target.classList.contains('group')) {
     try {
       const messageContainer = document.getElementById('chat-bubble-container');
@@ -170,6 +169,30 @@ textInputModal.addEventListener('shown.bs.modal', function () {
   const textInput = document.getElementById('textInput');
   textInput.focus();
 });
+
+const fileButton = document.getElementById('fileButton');
+const uploadFileAndCreateLink = async () => {
+  try {
+    const messageContainer = document.getElementById('chat-bubble-container');
+    const groupId = messageContainer.getAttribute('data-id');
+    const fileButton = document.getElementById('fileButton');
+    const file = fileButton.files[0];
+    console.log(file);
+    const token = getToken();
+    const response = await axios.post(domain + `/group/${groupId}/upload`, { file }, { headers: { Authorization: token }});
+    if (response.status === 200) {
+      const a = document.createElement('a');
+      a.href = response.data.fileUrl;
+      a.download = `${new Date}`;
+      a.click();
+    } else {
+      throw new Error(response.data.message);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+fileButton.addEventListener('change', uploadFileAndCreateLink);
 
 //***************************** */
 
@@ -228,7 +251,7 @@ const leaveCurrentGroup = async () => {
 
 const setAndCallUserModal = () => {
   const modalHeading = document.getElementById('textInputModalLabel');
-  modalHeading.innerText = 'Enter Invitee userId.';
+  modalHeading.innerText = 'Enter Invitee email.';
   const modalOpenButton = document.getElementById('textInputModalButton');
   modalOpenButton.setAttribute('data-action', 'user');
   modalOpenButton.click();
@@ -251,10 +274,10 @@ const addUserOrCreateGroupfunction = async () => {
 
       PageRefresh();
     } else if (action === 'user') {
-      const userId = inputField.value;
+      const email = inputField.value;
       const messageContainer = document.getElementById('chat-bubble-container');
       const groupId = messageContainer.getAttribute('data-id');
-      await axios.patch(domain + `/group/${groupId}/${userId}/add`, {}, { headers: { Authorization: token }});
+      const userId = await axios.patch(domain + `/group/${groupId}/${email}/add`, {}, { headers: { Authorization: token }});
       socket.emit('add user', userId, groupId);
       PageRefresh();
       inputField.value = '';
@@ -390,7 +413,7 @@ const getAction = async e => {
       socket.emit('remove user', userId, groupId);
       console.log(response);
     } else if (action === 'adminUser') {
-      const response = await axios.patch(domain + `/group/${groupId}/${userId}/admin`, { headers: { Authorization: token }});
+      const response = await axios.patch(domain + `/group/${groupId}/${userId}/admin`, {}, { headers: { Authorization: token }});
       socket.emit('admin user', userId, groupId);
       console.log(response);
     }
@@ -495,6 +518,7 @@ const setUserModalEventListener = () => {
 };
 
 const onWindowRefreshAndResize = () => {
+  axios.defaults.headers.common['Authorization']=getToken();
   setRemoveUserEventListener();
   setMakeUserAdminEventListener();
   setUserModalEventListener();
