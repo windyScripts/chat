@@ -58,18 +58,23 @@ export const updateUser = async (user, params, transaction = null) => {
   }
 };
 
-export const getUserSocketId = userId => {
+export const  getUserSocketId = userId => {
   try {
     return new Promise((resolve, reject) => {
       User.findOne({ where: { id: userId }}).then(response => {
         if (response !== null) {
+          console.log(response, response.socketId, response.dataValues.socketId);
           resolve(response.socketId);
         } else {
           resolve(null);
         }
-      }).catch(err => reject(err));
+      }).catch(err => {
+        console.log(err);
+        reject(err);
+      });
     });
   } catch (err) {
+    console.log(err);
     return new Promise((resolve, reject) => reject(err));
   }
 };

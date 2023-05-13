@@ -13,7 +13,6 @@ import { Server } from 'socket.io';
 
 dotenv.config();
 
-import { getSocketId, getUserSocket } from './controllers/socket-io.mjs';
 import Group from './models/group.mjs';
 import Message from './models/message.mjs';
 import UserGroupRelation from './models/user-group.mjs';
@@ -69,55 +68,17 @@ app.use((req, res) => {
 
 const httpServer = createServer(app);
 
-async function start() {
+const start = async () => {
   await sequelize.sync();
   console.log('Database connected. :)');
   httpServer.listen(process.env.PORT || 3000);
-}
+};
 
-const io = new Server(httpServer, {
+start();
+
+export const io = new Server(httpServer, {
   cors: {
     origin: '*',
     allowedHeaders: ['Authorization'],
   },
 });
-
-io.on('connection', socket => {
-  const token = socket.handshake.headers.authorization;
-  socket.id = getSocketId(token);
-  socket.on('join-room', (room, cb) => {
-    socket.join(room);
-    cb(`Connected to ${room}`);
-  });
-  socket.on('leave-room', (room, cb) => {
-    socket.leave(room);
-    cb(`Left ${room}`);
-  });
-  socket.on('send-message', (message, room = null) => {
-    if (room) {
-      socket.to(room).emit('receive-message', message, room);
-    }
-  });
-  socket.on('add user', (userId, room) => {
-    const userSocketId = getUserSocket(userId);
-    if (userSocketId) {
-      userSocketId.join(room);
-      socket.to(userSocketId).emit('refresh');
-    }
-  });
-  socket.on('remove user', (userId, room) => {
-    const userSocketId = getUserSocket(userId);
-    if (userSocketId) {
-      userSocketId.leave(room);
-      socket.to(userSocketId).emit('refresh');
-    }
-  });
-  socket.on('admin user', userId => {
-    const userSocketId = getUserSocket(userId);
-    if (userSocketId) {
-      socket.to(userSocketId).emit('refresh');
-    }
-  });
-});
-
-start();

@@ -2,7 +2,7 @@
 import { Op } from 'sequelize';
 
 import { createDownload } from '../services/downloads.mjs';
-import { createGroup, findGroupUsers, findGroup } from '../services/group.mjs';
+import { createGroup, findGroupUsers, findGroup, deleteGroup } from '../services/group.mjs';
 import { findGroupMessages, createMessage } from '../services/message.mjs';
 import { uploadtoS3 } from '../services/S3-services.mjs';
 import { removeUserFromGroup, addUserToGroup, checkAdmin, makeUserAdmin, updateGroupLastMessageTime } from '../services/user-group-relation.mjs';
@@ -10,15 +10,30 @@ import { getUserGroups, findOneUser } from '../services/user.mjs';
 import sequelize from '../util/database.mjs';
 
 export const addGroup = async (req, res) => {
-  try {
-    const createdBy = req.user.id;
+  const createdBy = req.user.id;
     const userId = req.user.id;
     const name = req.body.name;
-    const group = await createGroup({ createdBy, userId, name });
-    const response = await addUserToGroup(req.user, group, { role: 'Admin' });
-    await makeUserAdmin(userId, group.id);
+    let group = null;
+  try{
+    // couldn't include this in transaction because one specific group row has to be modified for both creation and adding user.
+    const response = await createGroup({ createdBy, userId, name });
+    if(response instanceof Error){
+      return res.status(500).json({message:"Something went wrong."})
+    } else{
+      group = response;
+    }
+  }catch(err){
+    console.log(err);
+  }
+  const t = await sequelize.transaction();
+  try {
+    const response = await addUserToGroup(req.user, group, { role: 'Admin' }, t);
+    await makeUserAdmin(userId, group.id, t);
+    await t.commit();
     return res.status(200).json({ message: `group ${name} created successfully.`, response });
   } catch (err) {
+    await t.rollback();
+    await deleteGroup(group)
     console.log(err);
   }
 };
@@ -85,7 +100,6 @@ export const getMessages = async (req, res) => {
     const groupPromise = findGroup({ where: { id: req.params.groupId }});
     const result = await Promise.all([userGroupsPromise, groupPromise]);
     const group = result[1];
-    console.log(req.params.groupId, group);
     if (result[0].every(e => e.id != group.id)) {
       return res.status(401).json({ message: 'unauthorized request' });
     }
@@ -144,7 +158,6 @@ export const findAndMakeUserAdmin = async (req, res) => {
   try {
     const userId = req.params.userId;
     const groupId = req.params.groupId;
-    console.log(userId, groupId);
     const response = await makeUserAdmin(userId, groupId);
     res.status(200).json(response);
   } catch (err) {

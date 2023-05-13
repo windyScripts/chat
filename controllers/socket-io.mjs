@@ -13,7 +13,9 @@ export const getSocketId = token => {
 
 export const getUserSocket = async userId => {
   try {
-    return await getUserSocketId(userId);
+    console.log(userId);
+    const socketId = await getUserSocketId(userId);
+    return socketId;
   } catch (err) {
     console.log(err);
   }

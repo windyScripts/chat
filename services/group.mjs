@@ -1,11 +1,15 @@
 import Group from '../models/group.mjs';
 
-export const createGroup = params => {
+export const createGroup = async (params, transaction = null) => {
   try {
     return new Promise((resolve, reject) => {
-      Group.create(params).then(response => resolve(response)).catch(err => reject(err));
+      Group.create(params, { transaction }).then(response => resolve(response)).catch(err => reject(err));
     });
   } catch (err) {
+    console.log(err);
+    if (transaction != null) {
+      await transaction.rollback();
+    }
     return new Promise((resolve, reject) => reject(err));
   }
 };
@@ -30,12 +34,15 @@ export const findGroupUsers = (group, params = null) => {
   }
 };
 
-export const deleteGroup = group => {
+export const deleteGroup = async (group, transaction = null) => {
   try {
     return new Promise((resolve, reject) => {
-      group.destroy() .then(response => resolve(response)).catch(err => reject(err));
+      group.destroy({ transaction }) .then(response => resolve(response)).catch(err => reject(err));
     });
   } catch (err) {
+    if (transaction) {
+      await transaction.rollback();
+    }
     return new Promise((resolve, reject) => reject(err));
   }
 };

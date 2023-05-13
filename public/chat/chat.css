@@ -47,7 +47,9 @@ input[type="file"] {
     cursor: pointer;
   }
 
-  
+.leaveGroup{
+    visibility: hidden;
+}
 
 .logout-btn {
     position: absolute;

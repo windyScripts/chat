@@ -71,6 +71,7 @@ export const login = async (req, res) => {
 };
 
 export const leaveGroup = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const user = req.user;
     const groupId = req.params.groupId;
@@ -80,20 +81,21 @@ export const leaveGroup = async (req, res) => {
     const p3 = checkForGroupAdmin({ where: { groupId, userId: { [Op.not]: user.id }}});
     const [group, adminStatus, alternateAdminExists] = await Promise.all([p1, p2, p3]);
 
-    const p4 =  removeUserFromGroup(user, group);
+    const p4 =  removeUserFromGroup(user, group, t);
     const p5 =  findOldestUserOrReturnNull(group, { where: { id: { [Op.not]: user.id }}});
     const [, oldestUser] = await Promise.all([p4, p5]);
 
     if (adminStatus === true && oldestUser !== null && alternateAdminExists === false) {
-      await makeUserAdmin(oldestUser, groupId);
+      await makeUserAdmin(oldestUser, groupId, t);
     }
 
     if (oldestUser === null) {
-      await deleteGroup(group);
+      await deleteGroup(group, t);
     }
-
+    await t.commit();
     return res.status(200).json({ message: 'Success' });
   } catch (err) {
+    await t.rollback();
     console.log(err);
   }
 };

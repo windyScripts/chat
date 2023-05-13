@@ -25,22 +25,29 @@ socket.on('refresh', async () => {
 const logOutButton = document.querySelector('#logout');
 async function logOutUser(e) {
   e.preventDefault();
-  const token = getToken();
-  await axios.delete(domain + '/auth/removeSocketId', { headers: { Authorization: token }});
+  await axios.delete(domain + '/auth/removeSocketId');
   localStorage.removeItem('token');
   console.log('token removed!');
   window.location.href = '../login/login.html';
 }
 logOutButton.addEventListener('click', logOutUser);
 
-const hideInputForm = () => {
+const hideGroupElements = () => {
   const inputBar = document.getElementById('inputBar');
+  const leaveGroupButton = document.getElementById('leaveGroupL')
+  const leaveDropDownButton = document.getElementById('leaveGroupS')
   inputBar.style.visibility = 'hidden';
+  leaveGroupButton.style.visibility = 'hidden';
+  leaveDropDownButton.style.display = 'none';
 };
 
-const showInputForm = () => {
+const showGroupElements = () => {
   const inputBar = document.getElementById('inputBar');
+  const leaveGroupButton = document.getElementById('leaveGroupL')
+  const leaveDropDownButton = document.getElementById('leaveGroupS')
   inputBar.style.visibility = 'visible';
+  leaveGroupButton.style.visibility = 'visible';
+  leaveDropDownButton.style.display = 'list-item';
 };
 
 const showAdmin = () => {
@@ -63,8 +70,7 @@ const sendMessage = async e => {
   const message = inputMessageField.value;
   const messageContainer = document.getElementById('chat-bubble-container');
   const groupId = messageContainer.getAttribute('data-id');
-  const token = getToken();
-  await axios.post(domain + '/group/message', { message, groupId }, { headers: { Authorization: token }});
+  await axios.post(domain + '/group/message', { message, groupId });
   socket.emit('send-message', message, groupId);
   inputMessageField.value = '';
   refreshMessages();
@@ -94,9 +100,8 @@ const refreshMessages = async () => {
     const groupId = messageContainer.getAttribute('data-id');
     messageContainer.innerHTML = '';
     if (groupId) {
-      showInputForm();
-      const token = getToken();
-      const adminResponse = await axios.get(domain + `/group/${groupId}/userAdminStatus`, { headers: { Authorization: token }});
+      showGroupElements();
+      const adminResponse = await axios.get(domain + `/group/${groupId}/userAdminStatus`);
       const adminStatus = adminResponse.data.adminStatus;
       if (adminStatus === true) {
         showAdmin();
@@ -112,7 +117,7 @@ const refreshMessages = async () => {
       if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1] && Object.prototype.hasOwnProperty.call(messageCache[messageCache.length - 1].dataValues, 'id'))
         lastLocalId = messageCache[messageCache.length - 1].dataValues.id;
 
-      const response = await axios.get(domain + `/group/${groupId}/messages`, { headers: { Authorization: token }, params: { loadFromId: lastLocalId }});
+      const response = await axios.get(domain + `/group/${groupId}/messages`, { params: { loadFromId: lastLocalId }});
       console.log(response);
       const messages = response.data.messagesWithUser;
       console.log(messages);
@@ -178,13 +183,13 @@ const uploadFileAndCreateLink = async () => {
     const fileButton = document.getElementById('fileButton');
     const file = fileButton.files[0];
     console.log(file);
-    const token = getToken();
-    const response = await axios.post(domain + `/group/${groupId}/upload`, { file }, { headers: { Authorization: token }});
+    const response = await axios.post(domain + `/group/${groupId}/upload`, { file });
     if (response.status === 200) {
-      const a = document.createElement('a');
-      a.href = response.data.fileUrl;
-      a.download = `${new Date}`;
-      a.click();
+      const message = response.data.fileurl;
+  const messageContainer = document.getElementById('chat-bubble-container');
+  const groupId = messageContainer.getAttribute('data-id');
+  await axios.post(domain + '/group/message', { message, groupId });
+  socket.emit('send-message', message, groupId);
     } else {
       throw new Error(response.data.message);
     }
@@ -234,15 +239,14 @@ const setCreateAndLeaveGroupEventListeners = () => {
 
 const leaveCurrentGroup = async () => {
   try {
-    const token = getToken();
     const messageContainer = document.getElementById('chat-bubble-container');
     const groupId = messageContainer.getAttribute('data-id');
     leaveGroupRoom(groupId);
-    await axios.delete(domain + `/group/${groupId}/leavegroup`, { headers: { Authorization: token }});
+    await axios.delete(domain + `/group/${groupId}/leavegroup`);
     messageContainer.value = '';
     PageRefresh();
     refreshMessages();
-    hideInputForm();
+    hideGroupElements();
     hideAdmin();
   } catch (err) {
     console.log(err);
@@ -261,7 +265,6 @@ const textInputSubmitButton = document.getElementById('textInputSubmit');
 const addUserOrCreateGroupfunction = async () => {
   const modalOpenButton = document.getElementById('textInputModalButton');
   try {
-    const token = getToken();
     const action = modalOpenButton.getAttribute('data-action');
     const inputField = document.getElementById('textInput');
     if (action === 'group') {
@@ -269,7 +272,7 @@ const addUserOrCreateGroupfunction = async () => {
 
       await axios.post(domain + '/group/new', {
         name,
-      }, { headers: { Authorization: token }});
+      });
       inputField.value = '';
 
       PageRefresh();
@@ -277,7 +280,8 @@ const addUserOrCreateGroupfunction = async () => {
       const email = inputField.value;
       const messageContainer = document.getElementById('chat-bubble-container');
       const groupId = messageContainer.getAttribute('data-id');
-      const userId = await axios.patch(domain + `/group/${groupId}/${email}/add`, {}, { headers: { Authorization: token }});
+      const response = await axios.patch(domain + `/group/${groupId}/${email}/add`, {});
+      const userId = response.data.userId;
       socket.emit('add user', userId, groupId);
       PageRefresh();
       inputField.value = '';
@@ -298,8 +302,7 @@ textInputSubmitButton.addEventListener('click', addUserOrCreateGroupfunction);
 
 const getCurrentUserGroups = async () => {
   try {
-    const token = getToken();
-    const response = await axios.get(domain + '/group/groups', { headers: { Authorization: token }});
+    const response = await axios.get(domain + '/group/groups');
     const groups = response.data;
     console.log(groups);
     return groups;
@@ -332,7 +335,6 @@ const PageRefresh = async() => {
     console.log(err);
   }
 };
-window.addEventListener('DOMContentLoaded', PageRefresh);
 
 const renderUserGroups = groups => {
   console.log(groups);
@@ -357,18 +359,40 @@ const renderUserGroups = groups => {
   }
 };
 
+const createAnchorsAndAppend = (array, container, idStore) => {
+  array.map((e, i) => {
+    const radio = document.createElement('input');
+    const radioContainer = document.createElement('div');
+    const radioLabel = document.createElement('label');
+    radio.type = 'radio';
+    radio.name = 'userList'; // Set the name attribute to group the radio buttons
+    radio.className = 'form-check-input';
+    radioLabel.className = 'form-check-label';
+    radioContainer.className = 'form-check';
+    radioLabel.innerText = e.name;
+    radio.setAttribute('data-id', e.id);
+    radio.id = i;
+    radioLabel.for = i;
+    radioContainer.appendChild(radio);
+    radioContainer.appendChild(radioLabel);
+    radio.onclick = () => {
+      idStore.textContent = radio.getAttribute('data-id');
+    };
+    container.appendChild(radioContainer);
+  });
+};
+
 const getUserToRemoveFromGroup = async() => {
   try {
     const messageContainer = document.getElementById('chat-bubble-container');
     const groupId = messageContainer.getAttribute('data-id');
-    const token = getToken();
-    const response = await axios.get(domain + `/group/${groupId}/otherUsers`, { headers: { Authorization: token }});
+    const response = await axios.get(domain + `/group/${groupId}/otherUsers`);
     const userList = response.data;
-    console.log(userList);
     const userListContainer = document.getElementById('userListContainer');
     userListContainer.innerHTML = '';
     const userIdHolder = document.getElementById('selectedUserId');
-    userList.map((e, i) => {
+    createAnchorsAndAppend(userList, userListContainer, userIdHolder);
+    /* userList.map((e, i) => {
       const radio = document.createElement('input');
       const radioContainer = document.createElement('div');
       const radioLabel = document.createElement('label');
@@ -388,7 +412,7 @@ const getUserToRemoveFromGroup = async() => {
         console.log(radio.getAttribute('data-id'));
       };
       userListContainer.appendChild(radioContainer);
-    });
+    }); */
 
     userListSubmitButton.setAttribute('action', 'removeUser');
     const userListModalButton = document.getElementById('userListModalButton');
@@ -403,17 +427,15 @@ const userListSubmitButton = document.getElementById('userListSubmit');
 const getAction = async e => {
   try {
     const action = e.target.getAttribute('action');
-
-    const token = getToken();
     const messageContainer = document.getElementById('chat-bubble-container');
     const groupId = messageContainer.getAttribute('data-id');
     const userId = document.getElementById('selectedUserId').textContent;
     if (action === 'removeUser') {
-      const response = await axios.delete(domain + `/group/${groupId}/${userId}/delete`, { headers: { Authorization: token }});
+      const response = await axios.delete(domain + `/group/${groupId}/${userId}/delete`);
       socket.emit('remove user', userId, groupId);
       console.log(response);
     } else if (action === 'adminUser') {
-      const response = await axios.patch(domain + `/group/${groupId}/${userId}/admin`, {}, { headers: { Authorization: token }});
+      const response = await axios.patch(domain + `/group/${groupId}/${userId}/admin`, {});
       socket.emit('admin user', userId, groupId);
       console.log(response);
     }
@@ -432,13 +454,13 @@ const makeUserGroupAdmin = async() => {
   try {
     const messageContainer = document.getElementById('chat-bubble-container');
     const groupId = messageContainer.getAttribute('data-id');
-    const token = getToken();
-    const response = await axios.get(domain + `/group/${groupId}/otherUsers`, { headers: { Authorization: token }});
+    const response = await axios.get(domain + `/group/${groupId}/otherUsers`);
     const userList = response.data;
     const userListContainer = document.getElementById('userListContainer');
     userListContainer.innerHTML = '';
     const userIdHolder = document.getElementById('selectedUserId');
-    userList.map((e, i) => {
+    createAnchorsAndAppend(userList, userListContainer, userIdHolder);
+    /* userList.map((e, i) => {
       const radio = document.createElement('input');
       const radioContainer = document.createElement('div');
       const radioLabel = document.createElement('label');
@@ -457,7 +479,7 @@ const makeUserGroupAdmin = async() => {
         userIdHolder.textContent = radio.getAttribute('data-id');
       };
       userListContainer.appendChild(radioContainer);
-    });
+    }); */
 
     userListSubmitButton.setAttribute('action', 'adminUser');
     const userListModalButton = document.getElementById('userListModalButton');
@@ -517,13 +539,21 @@ const setUserModalEventListener = () => {
   elementToUse.addEventListener('click', setAndCallUserModal);
 };
 
-const onWindowRefreshAndResize = () => {
-  axios.defaults.headers.common['Authorization']=getToken();
+const onWindowRefresh = () => {
+  axios.defaults.headers.common['Authorization'] = getToken();
+  setRemoveUserEventListener();
+  setMakeUserAdminEventListener();
+  setUserModalEventListener();
+  setCreateAndLeaveGroupEventListeners();
+  PageRefresh();
+};
+
+const onWindowResize = () => {
   setRemoveUserEventListener();
   setMakeUserAdminEventListener();
   setUserModalEventListener();
   setCreateAndLeaveGroupEventListeners();
 };
 
-window.addEventListener('DOMContentLoaded', onWindowRefreshAndResize);
-window.addEventListener('resize', onWindowRefreshAndResize);
+window.addEventListener('DOMContentLoaded', onWindowRefresh);
+window.addEventListener('resize', onWindowResize);

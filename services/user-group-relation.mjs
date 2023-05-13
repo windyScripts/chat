@@ -1,27 +1,42 @@
 import UserGroupRelation from '../models/user-group.mjs';
 
-export const addUserToGroup = (user, group, params) => {
+export const addUserToGroup = async (user, group, params, transaction = null) => {
   try {
-    return new Promise((resolve, reject) => {
-      user.addGroup(group, params).then(response => resolve(response)).catch(err => reject(err));
+    return new Promise((resolve,reject) => {
+      user.addGroup(group, params, { transaction }).then(response => resolve(response))
+      .catch(err => {
+        if(transaction){
+          transaction.rollback().then(()=>reject(err));
+        }
+      })
     });
   } catch (err) {
+    console.log(err);
     return new Promise((resolve, reject) => reject(err));
   }
 };
 
-export const makeUserAdmin = (userId, groupId) => {
+export const makeUserAdmin = async (userId, groupId, transaction = null) => {
   try {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       UserGroupRelation.findOne({ where: { userId, groupId }}).then(Relation => {
         if (Relation) {
-          Relation.update({ role: 'Admin' }).then(() => resolve(true));
+          Relation.update({ role: 'Admin' }, { transaction }).then(() => resolve(true))
+          .catch(err =>{
+            if(transaction){
+              transaction.rollback().then(()=>reject(err));
+            }
+          });
         } else {
           resolve(null);
         }
-      }).catch(err => reject(err));
+      });
     });
   } catch (err) {
+    console.log(err);
+    if (transaction) {
+      await transaction.rollback();
+    }
     return new Promise((resolve, reject) => reject(false));
   }
 };
