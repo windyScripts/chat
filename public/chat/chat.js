@@ -34,8 +34,8 @@ logOutButton.addEventListener('click', logOutUser);
 
 const hideGroupElements = () => {
   const inputBar = document.getElementById('inputBar');
-  const leaveGroupButton = document.getElementById('leaveGroupL')
-  const leaveDropDownButton = document.getElementById('leaveGroupS')
+  const leaveGroupButton = document.getElementById('leaveGroupL');
+  const leaveDropDownButton = document.getElementById('leaveGroupS');
   inputBar.style.visibility = 'hidden';
   leaveGroupButton.style.visibility = 'hidden';
   leaveDropDownButton.style.display = 'none';
@@ -43,8 +43,8 @@ const hideGroupElements = () => {
 
 const showGroupElements = () => {
   const inputBar = document.getElementById('inputBar');
-  const leaveGroupButton = document.getElementById('leaveGroupL')
-  const leaveDropDownButton = document.getElementById('leaveGroupS')
+  const leaveGroupButton = document.getElementById('leaveGroupL');
+  const leaveDropDownButton = document.getElementById('leaveGroupS');
   inputBar.style.visibility = 'visible';
   leaveGroupButton.style.visibility = 'visible';
   leaveDropDownButton.style.display = 'list-item';
@@ -71,27 +71,32 @@ const sendMessage = async e => {
   const messageContainer = document.getElementById('chat-bubble-container');
   const groupId = messageContainer.getAttribute('data-id');
   await axios.post(domain + '/group/message', { message, groupId });
-  socket.emit('send-message', message, groupId);
+  const room = groupId;
+  socket.emit('send-message', room, msg => {
+    console.log(msg);
+    PageRefresh();
+    refreshMessages();
+  });
   inputMessageField.value = '';
-  refreshMessages();
 };
 inputButton.addEventListener('click', sendMessage);
 
 const renderMessage = (element, container) => {
-  const outgoingOrIncoming = element.user;
-  const incomingMessageTemplate = document.createElement('div');
-  incomingMessageTemplate.className = 'message d-flex ' + (outgoingOrIncoming ? 'justify-content-start' : 'justify-content-end');
+  const outgoingOrIncoming = element.currentUser;
+  const MessageTemplate = document.createElement('div');
+  MessageTemplate.className = ' message d-flex ' + (outgoingOrIncoming ? 'justify-content-start' : 'justify-content-end');
 
   const chatBubble = document.createElement('div');
-  chatBubble.className = 'chat-bubble ' + (outgoingOrIncoming ? 'outgoing' : 'incoming');
+  chatBubble.className = ' chat-bubble message-body ' + (outgoingOrIncoming ? 'outgoing' : 'incoming');
 
   const messageContent = document.createElement('p');
-  messageContent.appendChild(document.createTextNode(element.dataValues.message));
+  messageContent.className = ' message-body ';
+  messageContent.appendChild(document.createTextNode((outgoingOrIncoming ? 'You: ' : `${element.userName}: `) + `${element.message}`));
 
   chatBubble.appendChild(messageContent);
 
-  incomingMessageTemplate.appendChild(chatBubble);
-  container.appendChild(incomingMessageTemplate);
+  MessageTemplate.appendChild(chatBubble);
+  container.appendChild(MessageTemplate);
 };
 
 const refreshMessages = async () => {
@@ -110,7 +115,7 @@ const refreshMessages = async () => {
       }
 
       //to reset message cache:
-      //localStorage.setItem(`${groupId} message cache`, null);
+      localStorage.setItem(`${groupId} message cache`, null);
       const messageCache = JSON.parse(localStorage.getItem(`${groupId} message cache`));
 
       let lastLocalId = 0;
@@ -119,7 +124,7 @@ const refreshMessages = async () => {
 
       const response = await axios.get(domain + `/group/${groupId}/messages`, { params: { loadFromId: lastLocalId }});
       console.log(response);
-      const messages = response.data.messagesWithUser;
+      const messages = response.data;
       console.log(messages);
       const container = document.querySelector('#chat-bubble-container');
       container.innerHTML = '';
@@ -176,20 +181,27 @@ textInputModal.addEventListener('shown.bs.modal', function () {
 });
 
 const fileButton = document.getElementById('fileButton');
-const uploadFileAndCreateLink = async () => {
+const uploadFileAndCreateLink = async e => {
+  e.preventDefault();
   try {
     const messageContainer = document.getElementById('chat-bubble-container');
     const groupId = messageContainer.getAttribute('data-id');
     const fileButton = document.getElementById('fileButton');
     const file = fileButton.files[0];
-    console.log(file);
-    const response = await axios.post(domain + `/group/${groupId}/upload`, { file });
+    const formData = new FormData();
+    const date = new Date();
+    formData.append(`${date.getTime}.png`, file);
+    console.log(domain);
+    const response = await axios.post(domain + `/group/${groupId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     if (response.status === 200) {
-      const message = response.data.fileurl;
-  const messageContainer = document.getElementById('chat-bubble-container');
-  const groupId = messageContainer.getAttribute('data-id');
-  await axios.post(domain + '/group/message', { message, groupId });
-  socket.emit('send-message', message, groupId);
+      socket.emit('send-message', groupId, msg => {
+        console.log(msg);
+        refreshMessages();
+      });
     } else {
       throw new Error(response.data.message);
     }
@@ -198,8 +210,6 @@ const uploadFileAndCreateLink = async () => {
   }
 };
 fileButton.addEventListener('change', uploadFileAndCreateLink);
-
-//***************************** */
 
 const setAndCallGroupModal = () => {
   const modalHeading = document.getElementById('textInputModalLabel');
@@ -244,8 +254,12 @@ const leaveCurrentGroup = async () => {
     leaveGroupRoom(groupId);
     await axios.delete(domain + `/group/${groupId}/leavegroup`);
     messageContainer.value = '';
-    PageRefresh();
-    refreshMessages();
+    socket.emit('leave-room', groupId, msg => {
+      console.log(msg);
+      PageRefresh();
+      refreshMessages();
+    });
+
     hideGroupElements();
     hideAdmin();
   } catch (err) {
@@ -282,8 +296,11 @@ const addUserOrCreateGroupfunction = async () => {
       const groupId = messageContainer.getAttribute('data-id');
       const response = await axios.patch(domain + `/group/${groupId}/${email}/add`, {});
       const userId = response.data.userId;
-      socket.emit('add user', userId, groupId);
-      PageRefresh();
+      socket.emit('add user', userId, groupId, msg => {
+        console.log(msg);
+        PageRefresh();
+      });
+
       inputField.value = '';
     }
     const closeModalButton = document.getElementById('textInputClose');
@@ -297,19 +314,6 @@ const addUserOrCreateGroupfunction = async () => {
 };
 
 textInputSubmitButton.addEventListener('click', addUserOrCreateGroupfunction);
-
-//***************************** */
-
-const getCurrentUserGroups = async () => {
-  try {
-    const response = await axios.get(domain + '/group/groups');
-    const groups = response.data;
-    console.log(groups);
-    return groups;
-  } catch (err) {
-    console.log(err);
-  }
-};
 
 const joinGroupRooms = groups => {
   groups.forEach(e => {
@@ -326,8 +330,20 @@ const leaveGroupRoom = groupId => {
   });
 };
 
+const getCurrentUserGroups = async () => {
+  try {
+    const response = await axios.get(domain + '/group/groups');
+    const groups = response.data;
+    console.log(groups);
+    return groups;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 const PageRefresh = async() => {
   try {
+    console.log('page refreshed');
     const groups = await getCurrentUserGroups();
     renderUserGroups(groups);
     joinGroupRooms(groups);
@@ -341,7 +357,6 @@ const renderUserGroups = groups => {
   const groupsContainer = document.getElementById('groupsContainer');
   groupsContainer.innerHTML = '';
   if (groups) {
-    groups.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
     try {
       groups.forEach(e => {
         const group = document.createElement('div');
@@ -365,7 +380,7 @@ const createAnchorsAndAppend = (array, container, idStore) => {
     const radioContainer = document.createElement('div');
     const radioLabel = document.createElement('label');
     radio.type = 'radio';
-    radio.name = 'userList'; // Set the name attribute to group the radio buttons
+    radio.name = 'userList';
     radio.className = 'form-check-input';
     radioLabel.className = 'form-check-label';
     radioContainer.className = 'form-check';
@@ -392,27 +407,6 @@ const getUserToRemoveFromGroup = async() => {
     userListContainer.innerHTML = '';
     const userIdHolder = document.getElementById('selectedUserId');
     createAnchorsAndAppend(userList, userListContainer, userIdHolder);
-    /* userList.map((e, i) => {
-      const radio = document.createElement('input');
-      const radioContainer = document.createElement('div');
-      const radioLabel = document.createElement('label');
-      radio.type = 'radio';
-      radio.name = 'userList'; // Set the name attribute to group the radio buttons
-      radio.className = 'form-check-input';
-      radioLabel.className = 'form-check-label';
-      radioContainer.className = 'form-check';
-      radioLabel.innerText = e.name;
-      radio.setAttribute('data-id', e.id);
-      radio.id = i;
-      radioLabel.for = i;
-      radioContainer.appendChild(radio);
-      radioContainer.appendChild(radioLabel);
-      radio.onclick = () => {
-        userIdHolder.textContent = radio.getAttribute('data-id');
-        console.log(radio.getAttribute('data-id'));
-      };
-      userListContainer.appendChild(radioContainer);
-    }); */
 
     userListSubmitButton.setAttribute('action', 'removeUser');
     const userListModalButton = document.getElementById('userListModalButton');
@@ -460,27 +454,6 @@ const makeUserGroupAdmin = async() => {
     userListContainer.innerHTML = '';
     const userIdHolder = document.getElementById('selectedUserId');
     createAnchorsAndAppend(userList, userListContainer, userIdHolder);
-    /* userList.map((e, i) => {
-      const radio = document.createElement('input');
-      const radioContainer = document.createElement('div');
-      const radioLabel = document.createElement('label');
-      radio.type = 'radio';
-      radio.name = 'userList'; // Set the name attribute to group the radio buttons
-      radio.className = 'form-check-input';
-      radioLabel.className = 'form-check-label';
-      radioContainer.className = 'form-check';
-      radioLabel.innerText = e.name;
-      radio.setAttribute('data-id', e.id);
-      radio.id = i;
-      radioLabel.for = i;
-      radioContainer.appendChild(radio);
-      radioContainer.appendChild(radioLabel);
-      radio.onclick = () => {
-        userIdHolder.textContent = radio.getAttribute('data-id');
-      };
-      userListContainer.appendChild(radioContainer);
-    }); */
-
     userListSubmitButton.setAttribute('action', 'adminUser');
     const userListModalButton = document.getElementById('userListModalButton');
     userListModalButton.click();

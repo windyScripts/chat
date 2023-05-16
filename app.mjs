@@ -13,6 +13,8 @@ import { Server } from 'socket.io';
 
 dotenv.config();
 
+import { getSocketId, getUserSocket } from './controllers/socket-io.mjs';
+import Downloads from './models/downloads.mjs';
 import Group from './models/group.mjs';
 import Message from './models/message.mjs';
 import UserGroupRelation from './models/user-group.mjs';
@@ -22,6 +24,9 @@ import authRoutes from './routes/user.mjs';
 import sequelize from './util/database.mjs';
 
 User.hasMany(Message);
+Message.belongsTo(User);
+
+User.hasMany(Downloads);
 
 Group.hasMany(Message);
 
@@ -74,11 +79,65 @@ const start = async () => {
   httpServer.listen(process.env.PORT || 3000);
 };
 
-start();
-
-export const io = new Server(httpServer, {
+const io = new Server(httpServer, {
   cors: {
     origin: '*',
     allowedHeaders: ['Authorization'],
   },
 });
+
+io.on('connection', socket => {
+  const token = socket.handshake.headers.authorization;
+  socket.id = getSocketId(token);
+  socket.on('join-room', (room, cb) => {
+    socket.join(room);
+    cb(`Connected to ${room}`);
+  });
+  socket.on('leave-room', (room, cb) => {
+    try {
+      socket.leave(room);
+      cb(`Left ${room}`);
+    } catch (err) {
+      console.log(err);
+    }
+  });
+  socket.on('send-message', (room = null, cb) => {
+    if (room) {
+      socket.to(room).emit('refresh');
+    }
+    cb(`send-message triggered for, ${room}`);
+  });
+  socket.on('add user', userId => {
+    try {
+      const userSocketId = getUserSocket(userId);
+      if (userSocketId) {
+        socket.to(userSocketId).emit('refresh');
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+  socket.on('remove user', userId => {
+    try {
+      const userSocketId = getUserSocket(userId);
+      if (userSocketId) {
+        socket.to(userSocketId).emit('refresh');
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+  socket.on('admin user', userId => {
+    try {
+      const userSocketId = getUserSocket(userId);
+      if (userSocketId) {
+        socket.to(userSocketId).emit('refresh');
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  });
+});
+
+start();
+

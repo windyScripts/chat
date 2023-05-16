@@ -3,11 +3,12 @@ import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 
-import { findGroup, deleteGroup } from '../services/group.mjs';
+import { findGroup, deleteGroup, findGroupUsers } from '../services/group.mjs';
 import { newPasswordRequest, findOnePasswordRequest, updatePasswordRequest } from '../services/passwords.mjs';
 import { sendEmail } from '../services/Sib-services.mjs';
-import { checkAdmin, removeUserFromGroup, findOldestUserOrReturnNull, makeUserAdmin, checkForGroupAdmin } from '../services/user-group-relation.mjs';
+import { findOneUGR, removeUserFromGroup } from '../services/user-group-relation.mjs';
 import { createUser, findOneUser, updateUser } from '../services/user.mjs';
+import { checkAdmin, makeUserAdmin } from '../util/authUtils.mjs';
 import sequelize from '../util/database.mjs';
 
 const generateAccessToken = (id, socketId) => {
@@ -24,6 +25,21 @@ const invalid = (...params) => {
 
 const createNewSocketId = () => {
   return uuidv4();
+};
+
+const findOldestUserOrReturnNull = async (group, userparams) => {
+  try {
+    const result = await findGroupUsers(group, {
+      ...userparams,
+      order: [['createdAt', 'ASC']],
+      limit: 1,
+    });
+
+    if (result.length === 0) return null;
+    else return result[0];
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const signUpUser = async (req, res) => {
@@ -78,7 +94,7 @@ export const leaveGroup = async (req, res) => {
 
     const p1 = findGroup({ where: { id: groupId }});
     const p2 = checkAdmin(user.id, groupId);
-    const p3 = checkForGroupAdmin({ where: { groupId, userId: { [Op.not]: user.id }}});
+    const p3 = findOneUGR({ where: { groupId, userId: { [Op.not]: user.id }}, role: 'Admin' });
     const [group, adminStatus, alternateAdminExists] = await Promise.all([p1, p2, p3]);
 
     const p4 =  removeUserFromGroup(user, group, t);
@@ -86,7 +102,7 @@ export const leaveGroup = async (req, res) => {
     const [, oldestUser] = await Promise.all([p4, p5]);
 
     if (adminStatus === true && oldestUser !== null && alternateAdminExists === false) {
-      await makeUserAdmin(oldestUser, groupId, t);
+      await makeUserAdmin(oldestUser.id, groupId, t);
     }
 
     if (oldestUser === null) {
@@ -133,9 +149,10 @@ export const createPasswordRequest = async (req, res) => {
 
       await sendEmail(sender, receiver, subject, textContent, htmlContent, params);
       return res.status(200).json({ message: 'Email sent successfully' });
-    } else throw new Error('That email does not exist in records');
+    } else return res.status(401).json({ message: 'That email does not exist in records' });
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: 'Something went wrong' });
   }
 };
 
@@ -161,6 +178,7 @@ export const getPasswordUpdateForm = async (req, res) => {
     } else return res.status(401).json({ message: 'Reset link expired/invalid' });
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ message: 'Something went wrong' });
   }
 };
 

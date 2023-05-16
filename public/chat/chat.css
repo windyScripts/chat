@@ -8,6 +8,13 @@
     line-height: 1.5;
 }
 
+body {
+    font-family: "Helvetica Neue", sans-serif;
+  }
+
+.message{
+    margin: 5px 0;
+}
 
 .outgoing {
     background-color: #dcf8c6;
@@ -17,12 +24,12 @@
     background-color: hsl(214, 100%, 88%);
 }
 
-
 #inputButton {
     font-size: 30px;
     padding: 6px 15px 6px 15px;
     margin: 0;
 }
+
 
 input[type="file"] {
     opacity: 0;
@@ -31,21 +38,27 @@ input[type="file"] {
     left: 0;
     width: 0;
     height: 0;
+    margin: 0;
   }
   
-  /* Add your own text using ::before ----------*/
   label[for="fileButton"]::before {
-    content: "📎";
+    content: "+file";
     display: inline-block;
     cursor: pointer;
+    margin: 0;
   }
   
-  /* Style the label as a button ---------------*/
   label[for="fileButton"] {
     display: inline-block;
-    padding: 6px 15px 6px 15px;
+    padding: 17px 17px 17px 17px;
     cursor: pointer;
+    border-radius: 5px;
+    margin: 0;
   }
+
+.group{
+    cursor: default;
+}
 
 .leaveGroup{
     visibility: hidden;
@@ -57,30 +70,26 @@ input[type="file"] {
     right: 20px;
 }
 
+.group1, .inputButton,#topBar{
+    background-color: #0062CC;
+    color: #fff;
+}
+
+#topBar{
+    border-radius: 5px;
+    position: fixed;
+    width: 100%;
+    max-width: 1050px;
+    z-index: 9999;
+}
+
 .absoluteElementContainer{
  position: relative;
 }
 
-#topLeft{
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 50px;
-    width: 25%;
-}
-#topRight{
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 50px;
-    width: 75%;
-}
-
-#mainContainer{
-    margin-top: 50px
-}
-
 header{
+    padding: 0;
+    top: 0;
     height: 50px;
 }
 
@@ -91,10 +100,18 @@ header{
     max-width: 500px;
 }
 
+div.vessel{
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+body{
+    background-color: #adaeaf;
+}
 
 .vessel{
-    max-width: 1050px; /* Set the maximum width of the container */
-    margin: 0 auto; /* Center the container horizontally */
+    max-width: 1050px;
+    margin: 0 auto;
   }
 
 .toolbar{
@@ -116,7 +133,7 @@ header{
 #inputBar{
     position:fixed;
     bottom: 0;
-    max-width: 700px;
+    max-width: 600px;
     visibility: hidden;
 }
 
@@ -125,53 +142,15 @@ header{
     height: 50px; 
 }
 
-.svg{
-    width: 25px;
-    height: 25px;
-}
-
 .admin{
     visibility: hidden;
 }
 
-/* dark mode stuff */
-
-/* .darkButton{
-    background-color:#212529;
-    color:#ffffffd2;
+#chat-bubble-container{
+    margin-bottom:70px ;
 }
 
-
-.darkButton:hover{
-    background-color:#212529;
-    color: #fff;
+.message-body{
+    word-wrap: break-word;
 }
 
-.darkButton:focus{
-    
-    background-color:#212529;
-    color:#ffffffd2;
-    
-}
-
-
-.darkInputButton{
- background-color:#212529;
-    color:#ffffffd2;
-}
-
-.darkInputButton:hover{
-    background-color:#212529;
-    color: #fff;  
-}
-
-input#input{
-     background-color: #49494900; 
-    color: #ffffffd2;;
-    border: 1px solid #ffffffd2;;
-
-}
-
-label{
-    color: #ffffffd2;
-} */
