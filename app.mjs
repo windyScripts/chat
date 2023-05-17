@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import { Server } from 'socket.io';
 
 dotenv.config();
@@ -44,10 +45,8 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
 
 if (environment === 'production') {
   app.use(helmet());
-  const compression = require('compression');
   app.use(compression());
 } else if (environment === 'development') {
-/*   app.use(cors); */
   app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],

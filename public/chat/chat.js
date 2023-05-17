@@ -91,7 +91,7 @@ const renderMessage = (element, container) => {
 
   const messageContent = document.createElement('p');
   messageContent.className = ' message-body ';
-  messageContent.appendChild(document.createTextNode((outgoingOrIncoming ? 'You: ' : `${element.userName}: `) + `${element.message}`));
+  messageContent.appendChild(document.createTextNode((outgoingOrIncoming ? 'You: ' : `${element.user.name}: `) + `${element.message}`));
 
   chatBubble.appendChild(messageContent);
 

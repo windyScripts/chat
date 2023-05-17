@@ -130,19 +130,13 @@ export const getMessages = async (req, res) => {
     if (userGroups.every(e => e.id != group.id)) {
       return res.status(401).json({ message: 'unauthorized request' });
     }
-    const collection =  await findGroupMessages(
+    const messages = await findGroupMessages(
       { where: { id: { [Op.gt]: req.query.loadFromId }},
         include: [{
           model: User,
           attributes: ['name'],
-        }] }, group);
-    const messages = collection.map(record => {
-      if (record.userId === req.user.id) {
-        return { message: record.dataValues.message, currentUser: true, userName: record.user.dataValues.name };
-      } else {
-        return { message: record.dataValues.message, currentUser: false, userName: record.user.dataValues.name };
-      }
-    });
+        }],
+        attributes: ['message','userId',[sequelize.where(sequelize.col('userId'), '=', req.user.id), 'currentUser']], }, group);
     return res.status(200).json(messages);
   } catch (err) {
     console.log(err);
