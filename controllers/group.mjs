@@ -136,7 +136,7 @@ export const getMessages = async (req, res) => {
           model: User,
           attributes: ['name'],
         }],
-        attributes: ['message', 'userId', [sequelize.where(sequelize.col('userId'), '=', req.user.id), 'currentUser']] }, group);
+        attributes: ['id','message', 'userId', [sequelize.where(sequelize.col('userId'), '=', req.user.id), 'currentUser']] }, group);
     return res.status(200).json(messages);
   } catch (err) {
     console.log(err);

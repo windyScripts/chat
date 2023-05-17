@@ -115,13 +115,12 @@ const refreshMessages = async () => {
       }
 
       //to reset message cache:
-      localStorage.setItem(`${groupId} message cache`, null);
+      //localStorage.setItem(`${groupId} message cache`, null);
       const messageCache = JSON.parse(localStorage.getItem(`${groupId} message cache`));
-
+      console.log(messageCache);
       let lastLocalId = 0;
-      if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1] && Object.prototype.hasOwnProperty.call(messageCache[messageCache.length - 1].dataValues, 'id'))
-        lastLocalId = messageCache[messageCache.length - 1].dataValues.id;
-
+      if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1] && Object.prototype.hasOwnProperty.call(messageCache[messageCache.length - 1], 'id'))
+        lastLocalId = messageCache[messageCache.length - 1].id;
       const response = await axios.get(domain + `/group/${groupId}/messages`, { params: { loadFromId: lastLocalId }});
       const messages = response.data;
       const container = document.querySelector('#chat-bubble-container');
