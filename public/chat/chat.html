@@ -32,7 +32,8 @@
                             Group +/-
                         </button>
                         <ul class="dropdown-menu dropdown-menu">
-                            <li class="dropdown-item"><button class="group1 btn toolbar" id="createGroupS">Create
+                            <li class="dropdown-item"><button class="group1 btn toolbar" id="createGroupS" data-bs-toggle="modal"
+                                data-bs-target="#groupModal">Create
                                     group</button></li>
                             <li class="leaveGroup dropdown-item"> <button class="group1 btn toolbar"
                                     id="leaveGroupS">Leave
@@ -43,7 +44,8 @@
 
                 </div>
                 <div class="button-container">
-                    <button class="group1 btn toolbar" id="createGroupL">Create
+                    <button class="group1 btn toolbar" id="createGroupL" data-bs-toggle="modal"
+                    data-bs-target="#groupModal">Create
                         group</button>
                     <button class="group1 btn toolbar leaveGroup" id="leaveGroupL">Leave
                         group</button>
@@ -57,7 +59,8 @@
                             Admin
                         </button>
                         <ul class="dropdown-menu dropdown-menu">
-                            <li><button class="group1 dropdown-item btn toolbar" id="addUserS">Add user</button></li>
+                            <li><button class="group1 dropdown-item btn toolbar" id="addUserS" data-bs-toggle="modal"
+                                data-bs-target="#userEmailInputModal">Add user</button></li>
                             <li> <button class="group1 dropdown-item btn toolbar" id="removeUserS">Remove user</button>
                             </li>
                             <li> <button class="group1 dropdown-item btn toolbar" id="adminUserS">Make Admin</button>
@@ -67,7 +70,8 @@
 
                 </div>
                 <div class="button-container admin">
-                    <button class="group1 btn toolbar" id="addUserL">Add user</button>
+                    <button class="group1 btn toolbar" id="addUserL" data-bs-toggle="modal"
+                    data-bs-target="#userEmailInputModal">Add user</button>
                     <button class="group1 btn toolbar" id="removeUserL">Remove user</button>
                     <button class="group1 btn toolbar" id="adminUserL">Make Admin</button>
                 </div>
@@ -81,27 +85,54 @@
     <div class="row row-cols-2 vessel">
         <section id="sidebar" class="col-5 d-inline-block flex-grow-2 flex-shrink-2 left">
             <section>
-                <button hidden id="textInputModalButton" data-bs-toggle="modal"
-                    data-bs-target="#textInputModal"></button>
-                <div class="modal fade" id="textInputModal" tabindex="-1" aria-labelledby="textInputModalLabel"
+                <!-- <button hidden id="userEmailInputModalButton" data-bs-toggle="modal"
+                    data-bs-target="#userEmailInputModal"></button> -->
+                <div class="modal fade" id="userEmailInputModal" tabindex="-1" aria-labelledby="userEmailInputModalLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="textInputModalLabel"></h5>
+                                <h5 class="modal-title" id="userEmailInputModalLabel">Enter invitee email.</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
                                 <form action="">
-                                    <input type="text" id="textInput" class="form-control" maxlength=20>
+                                    <input type="text" id="userEmailField" class="form-control" maxlength=20>
                                 </form>
 
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" id="textInputClose"
+                                <button type="button" class="btn btn-secondary" id="userEmailInputClose"
                                     data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary" id="textInputSubmit">Submit</button>
+                                <button type="button" class="btn btn-primary" id="userEmailInputSubmit">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section>
+   <!--              <button hidden id="groupModalButton" data-bs-toggle="modal"
+                    data-bs-target="#groupModal"></button> -->
+                <div class="modal fade" id="groupModal" tabindex="-1" aria-labelledby="groupModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="groupModalLabel">Enter Group Name.</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="">
+                                    <input type="text" id="groupNameField" class="form-control" maxlength=20>
+                                </form>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" id="groupClose"
+                                    data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="groupSubmit">Submit</button>
                             </div>
                         </div>
                     </div>

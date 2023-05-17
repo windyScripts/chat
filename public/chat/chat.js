@@ -84,7 +84,7 @@ inputButton.addEventListener('click', sendMessage);
 const renderMessage = (element, container) => {
   const outgoingOrIncoming = element.currentUser;
   const MessageTemplate = document.createElement('div');
-  MessageTemplate.className = ' message d-flex ' + (outgoingOrIncoming ? 'justify-content-start' : 'justify-content-end');
+  MessageTemplate.className = ' message d-flex ' + (outgoingOrIncoming ? 'justify-content-end' : 'justify-content-start');
 
   const chatBubble = document.createElement('div');
   chatBubble.className = ' chat-bubble message-body ' + (outgoingOrIncoming ? 'outgoing' : 'incoming');
@@ -123,12 +123,9 @@ const refreshMessages = async () => {
         lastLocalId = messageCache[messageCache.length - 1].dataValues.id;
 
       const response = await axios.get(domain + `/group/${groupId}/messages`, { params: { loadFromId: lastLocalId }});
-      console.log(response);
       const messages = response.data;
-      console.log(messages);
       const container = document.querySelector('#chat-bubble-container');
       container.innerHTML = '';
-      console.log(messageCache, messages);
       if (messageCache) {
         messageCache.forEach(element => renderMessage(element, container));
       }
@@ -172,12 +169,20 @@ const loadGroupMessages = async e => {
 };
 groupsContainer.addEventListener('click', loadGroupMessages);
 
-const textInputModal = document.getElementById('textInputModal');
+const userEmailInputModal = document.getElementById('userEmailInputModal');
 
 // adds focus to the textbox.
-textInputModal.addEventListener('shown.bs.modal', function () {
-  const textInput = document.getElementById('textInput');
-  textInput.focus();
+userEmailInputModal.addEventListener('shown.bs.modal', function () {
+  const userEmailInput = document.getElementById('userEmailField');
+  userEmailInput.focus();
+});
+
+const groupModal = document.getElementById('groupModal');
+
+// adds focus to the textbox.
+groupModal.addEventListener('shown.bs.modal', function () {
+  const groupNameField = document.getElementById('groupNameField');
+  groupNameField.focus();
 });
 
 const fileButton = document.getElementById('fileButton');
@@ -191,7 +196,6 @@ const uploadFileAndCreateLink = async e => {
     const formData = new FormData();
     const date = new Date();
     formData.append(`${date.getTime}.png`, file);
-    console.log(domain);
     const response = await axios.post(domain + `/group/${groupId}/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -211,32 +215,14 @@ const uploadFileAndCreateLink = async e => {
 };
 fileButton.addEventListener('change', uploadFileAndCreateLink);
 
-const setAndCallGroupModal = () => {
-  const modalHeading = document.getElementById('textInputModalLabel');
-  modalHeading.innerText = 'Enter Group Name.';
-  const modalOpenButton = document.getElementById('textInputModalButton');
-  modalOpenButton.setAttribute('data-action', 'group');
-  modalOpenButton.click();
-};
-const setCreateAndLeaveGroupEventListeners = () => {
-  const createGroupButtonS = document.getElementById('createGroupS');
-  const createGroupButtonL = document.getElementById('createGroupL');
-  const breakPointWidth = 750;
-  const screenWidth = window.innerWidth;
-  let elementToUse = null;
-  if (screenWidth < breakPointWidth) {
-    elementToUse = createGroupButtonS;
-    createGroupButtonL.removeEventListener('click', setAndCallGroupModal);
-  } else {
-    elementToUse = createGroupButtonL;
-    createGroupButtonS.removeEventListener('click', setAndCallGroupModal);
-  }
-  elementToUse.addEventListener('click', setAndCallGroupModal);
+const setLeaveGroupEventListener = () => {
 
   const leaveGroupButtonS = document.getElementById('leaveGroupS');
   const leaveGroupButtonL = document.getElementById('leaveGroupL');
+  const screenWidth = window.innerWidth;
+  const breakPointWidth = 750;
 
-  elementToUse = null;
+  let elementToUse = null;
   if (screenWidth < breakPointWidth) {
     elementToUse = leaveGroupButtonS;
     leaveGroupButtonL.removeEventListener('click', leaveCurrentGroup);
@@ -267,30 +253,30 @@ const leaveCurrentGroup = async () => {
   }
 };
 
-const setAndCallUserModal = () => {
-  const modalHeading = document.getElementById('textInputModalLabel');
-  modalHeading.innerText = 'Enter Invitee email.';
-  const modalOpenButton = document.getElementById('textInputModalButton');
-  modalOpenButton.setAttribute('data-action', 'user');
-  modalOpenButton.click();
-};
-
-const textInputSubmitButton = document.getElementById('textInputSubmit');
-const addUserOrCreateGroupfunction = async () => {
-  const modalOpenButton = document.getElementById('textInputModalButton');
+const groupSubmitButton = document.getElementById('groupSubmit');
+const createGroup = async () => {
+  const groupNameField = document.getElementById('groupNameField')
   try {
-    const action = modalOpenButton.getAttribute('data-action');
-    const inputField = document.getElementById('textInput');
-    if (action === 'group') {
-      const name = inputField.value;
+      const name = groupNameField.value;
 
       await axios.post(domain + '/group/new', {
         name,
       });
-      inputField.value = '';
+      groupNameField.value = '';
 
       PageRefresh();
-    } else if (action === 'user') {
+    const closeModalButton = document.getElementById('groupClose');
+    closeModalButton.click();
+  } catch (err) {
+    console.log(err);
+  }
+};
+groupSubmitButton.addEventListener('click',createGroup)
+
+const userEmailInputSubmitButton = document.getElementById('userEmailInputSubmit')
+const addUser = async () => {
+  try {
+    const inputField = document.getElementById('userEmailField');
       const email = inputField.value;
       const messageContainer = document.getElementById('chat-bubble-container');
       const groupId = messageContainer.getAttribute('data-id');
@@ -302,18 +288,13 @@ const addUserOrCreateGroupfunction = async () => {
       });
 
       inputField.value = '';
-    }
-    const closeModalButton = document.getElementById('textInputClose');
+    const closeModalButton = document.getElementById('userEmailInputClose');
     closeModalButton.click();
-
-    modalOpenButton.setAttribute('data-action', null);
   } catch (err) {
     console.log(err);
-    modalOpenButton.setAttribute('data-action', null);
   }
 };
-
-textInputSubmitButton.addEventListener('click', addUserOrCreateGroupfunction);
+userEmailInputSubmitButton.addEventListener('click', addUser);
 
 const joinGroupRooms = groups => {
   groups.forEach(e => {
@@ -334,7 +315,6 @@ const getCurrentUserGroups = async () => {
   try {
     const response = await axios.get(domain + '/group/groups');
     const groups = response.data;
-    console.log(groups);
     return groups;
   } catch (err) {
     console.log(err);
@@ -343,7 +323,6 @@ const getCurrentUserGroups = async () => {
 
 const PageRefresh = async() => {
   try {
-    console.log('page refreshed');
     const groups = await getCurrentUserGroups();
     renderUserGroups(groups);
     joinGroupRooms(groups);
@@ -353,7 +332,6 @@ const PageRefresh = async() => {
 };
 
 const renderUserGroups = groups => {
-  console.log(groups);
   const groupsContainer = document.getElementById('groupsContainer');
   groupsContainer.innerHTML = '';
   if (groups) {
@@ -425,13 +403,11 @@ const getAction = async e => {
     const groupId = messageContainer.getAttribute('data-id');
     const userId = document.getElementById('selectedUserId').textContent;
     if (action === 'removeUser') {
-      const response = await axios.delete(domain + `/group/${groupId}/${userId}/delete`);
+      await axios.delete(domain + `/group/${groupId}/${userId}/delete`);
       socket.emit('remove user', userId, groupId);
-      console.log(response);
     } else if (action === 'adminUser') {
-      const response = await axios.patch(domain + `/group/${groupId}/${userId}/admin`, {});
+      await axios.patch(domain + `/group/${groupId}/${userId}/admin`, {});
       socket.emit('admin user', userId, groupId);
-      console.log(response);
     }
     const closeModalButton = document.getElementById('userListClose');
     closeModalButton.click();
@@ -485,8 +461,9 @@ const setMakeUserAdminEventListener = () => {
   const adminUserButtonL = document.getElementById('adminUserL');
 
   const screenWidth = window.innerWidth;
+  const breakPointWidth = 750;
   let elementToUse;
-  if (screenWidth < 750) {
+  if (screenWidth < breakPointWidth) {
     elementToUse = adminUserButtonS;
     adminUserButtonL.removeEventListener('click', makeUserGroupAdmin);
   } else {
@@ -496,36 +473,18 @@ const setMakeUserAdminEventListener = () => {
   elementToUse.addEventListener('click', makeUserGroupAdmin);
 };
 
-const setUserModalEventListener = () => {
-  const addUserButtonL = document.getElementById('addUserL');
-  const addUserButtonS = document.getElementById('addUserS');
-
-  const screenWidth = window.innerWidth;
-  let elementToUse;
-  if (screenWidth < 750) {
-    elementToUse = addUserButtonS;
-    addUserButtonL.removeEventListener('click', setAndCallGroupModal);
-  } else {
-    elementToUse = addUserButtonL;
-    addUserButtonS.removeEventListener('click', setAndCallGroupModal);
-  }
-  elementToUse.addEventListener('click', setAndCallUserModal);
-};
-
 const onWindowRefresh = () => {
   axios.defaults.headers.common['Authorization'] = getToken();
   setRemoveUserEventListener();
   setMakeUserAdminEventListener();
-  setUserModalEventListener();
-  setCreateAndLeaveGroupEventListeners();
+  setLeaveGroupEventListener();
   PageRefresh();
 };
 
 const onWindowResize = () => {
   setRemoveUserEventListener();
   setMakeUserAdminEventListener();
-  setUserModalEventListener();
-  setCreateAndLeaveGroupEventListeners();
+  setLeaveGroupEventListener();
 };
 
 window.addEventListener('DOMContentLoaded', onWindowRefresh);

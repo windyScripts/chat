@@ -4,12 +4,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import bodyParser from 'body-parser';
+import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import compression from 'compression';
 import { Server } from 'socket.io';
 
 dotenv.config();
