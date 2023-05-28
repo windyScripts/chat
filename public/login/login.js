@@ -27,6 +27,7 @@ const validateLogin = async e => {
       feedback.textContent = 'Login success!';
       const token = response.data.token;
       localStorage.setItem('token', token);
+      localStorage.setItem('email',email);
       window.location.href = '../chat/chat.html';
     } catch (err) {
       console.log(err);

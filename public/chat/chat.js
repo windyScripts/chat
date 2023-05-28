@@ -27,6 +27,7 @@ async function logOutUser(e) {
   e.preventDefault();
   await axios.delete(domain + '/auth/removeSocketId');
   localStorage.removeItem('token');
+  localStorage.removeItem('email');
   console.log('token removed!');
   window.location.href = '../login/login.html';
 }
@@ -114,10 +115,10 @@ const refreshMessages = async () => {
         hideAdmin();
       }
 
+      const userEmail = localStorage.getItem('email');
       //to reset message cache:
-      //localStorage.setItem(`${groupId} message cache`, null);
-      const messageCache = JSON.parse(localStorage.getItem(`${groupId} message cache`));
-      console.log(messageCache);
+      //localStorage.setItem(`${userEmail}:${groupId} message cache`, null);
+      const messageCache = JSON.parse(localStorage.getItem(`${userEmail}:${groupId} message cache`));
       let lastLocalId = 0;
       if (messageCache && typeof messageCache === 'object' && messageCache[messageCache.length - 1] && Object.prototype.hasOwnProperty.call(messageCache[messageCache.length - 1], 'id'))
         lastLocalId = messageCache[messageCache.length - 1].id;
@@ -147,7 +148,7 @@ const refreshMessages = async () => {
       }
       const newCache = cachableMessages.length > 10 ? cachableMessages.slice(cachableMessages.length - 10) : cachableMessages;
 
-      localStorage.setItem(`${groupId} message cache`, JSON.stringify(newCache));
+      localStorage.setItem(`${userEmail}:${groupId} message cache`, JSON.stringify(newCache));
     }
   } catch (err) {
     console.log(err);
