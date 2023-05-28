@@ -8,7 +8,7 @@ export const findOneUGR = params => {
   return UserGroupRelation.findOne(params);
 };
 
-export const updateUGR = (relation, params) => {
+export const updateOneUGR = (relation, params) => {
   return relation.update(params);
 };
 
@@ -16,3 +16,6 @@ export const removeUserFromGroup = (user, group) => {
   return user.removeGroup(group);
 };
 
+export const updateAllUGR = (valueParams,searchParams=null,transaction=null) => {
+  return UserGroupRelation.update(valueParams,searchParams,{transaction});
+};

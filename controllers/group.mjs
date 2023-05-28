@@ -9,19 +9,17 @@ import { createDownload } from '../services/downloads.mjs';
 import { createGroup, findGroupUsers, findGroup, deleteGroup } from '../services/group.mjs';
 import { findGroupMessages, createMessage } from '../services/message.mjs';
 import { uploadtoS3 } from '../services/S3-services.mjs';
-import { removeUserFromGroup, addUserToGroup, findOneUGR, updateUGR } from '../services/user-group-relation.mjs';
+import { removeUserFromGroup, addUserToGroup, updateAllUGR } from '../services/user-group-relation.mjs';
 import { getUserGroups, findOneUser } from '../services/user.mjs';
 import { makeUserAdmin, checkAdmin } from '../util/authUtils.mjs';
 import sequelize from '../util/database.mjs';
 
-const updateGroupLastMessageTime = async (params, transaction = null) => {
+const updateGroupLastMessageTime = async (groupId, transaction = null) => {
   try {
-    const relation = await findOneUGR(params, { transaction });
-
-    if (relation) {
-      await updateUGR(relation, { lastMessageTime: new Date() });
+      const response = await updateAllUGR({ lastMessageTime: new Date() },{where:{groupId}},transaction);
+      console.log(response,"!!!");
     }
-  } catch (err) {
+    catch (err) {
     console.log(err);
   }
 };
@@ -112,7 +110,7 @@ export const addMessage = async (req, res) => {
     const groupId = req.body.groupId;
     const message = req.body.message;
     const p1 = createMessage({ userId, message, groupId }, t);
-    const p2 = updateGroupLastMessageTime({ where: { groupId, userId }}, t);
+    const p2 = updateGroupLastMessageTime(groupId, t);
     await Promise.all([p1, p2]);
     await t.commit();
     return res.status(200).json({ message: 'Message sent successfully' });
