@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-import User from '../models/user.mjs';
+import { findOneUser } from '../services/user.mjs';
 
 export const authorization = async(req, res, next) => {
   if (req.header('Authorization') === undefined) {
@@ -9,7 +9,7 @@ export const authorization = async(req, res, next) => {
   try {
     const token = req.header('Authorization');
     const id = Number(jwt.verify(token, process.env.JWT_SIGN).userId);
-    const user = await User.findByPk(id);
+    const user = await findOneUser({where:{id}});
     if (user === null) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
