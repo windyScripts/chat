@@ -7,3 +7,11 @@ export const createMessage = async (params, transaction = null) => {
 export const findGroupMessages = (params, group) => {
   return  group.getMessages(params);
 };
+
+export const getAllMessages = (transaction=null) => {
+  return Message.findAll({},{transaction})
+}
+
+export const truncateMessageDB = (transaction=null) => {
+  return Message.destroy({ truncate: true },{transaction})
+}
