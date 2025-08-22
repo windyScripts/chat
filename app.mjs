@@ -1,3 +1,5 @@
+// app.mjs
+
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
@@ -14,16 +16,22 @@ import { Server } from 'socket.io';
 
 dotenv.config();
 
+// Controllers & Models
 import { getSocketId, getUserSocket } from './controllers/socket-io.mjs';
 import Downloads from './models/downloads.mjs';
 import Group from './models/group.mjs';
 import Message from './models/message.mjs';
 import UserGroupRelation from './models/user-group.mjs';
 import User from './models/user.mjs';
+
+// Routes
 import groupRoutes from './routes/group.mjs';
 import authRoutes from './routes/user.mjs';
+
+// DB
 import sequelize from './util/database.mjs';
 
+// Associations
 User.hasMany(Message);
 Message.belongsTo(User);
 
@@ -35,25 +43,28 @@ User.belongsToMany(Group, { through: UserGroupRelation });
 Group.belongsToMany(User, { through: UserGroupRelation });
 
 const app = express();
-const environment = process.env.NODE_ENV;
+const environment = process.env.NODE_ENV || 'development';
 
+// __dirname in ES modules
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'),
+// Logging
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, 'access.log'),
   { flags: 'a' },
 );
 
+// Middleware
 if (environment === 'production') {
   app.use(helmet());
   app.use(compression());
-} else if (environment === 'development') {
+} else {
   app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   }));
 }
 
-// allows authorization header from front-end
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Authorization');
   next();
@@ -63,10 +74,11 @@ app.use(morgan('combined', { stream: accessLogStream }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Routes
 app.use('/auth', authRoutes);
 app.use('/group', groupRoutes);
 
-// Serve static assets (CSS, JS, images, etc.)
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Explicit routes
@@ -82,23 +94,16 @@ app.get('/', (req, res) => {
   res.send('Service is running ✅');
 });
 
-// Catch-all for everything else (only for HTML routes)
+// Catch-all (only for HTML routes)
 app.get('*', (req, res) => {
   if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
-    // Let static middleware handle CSS/JS/images/etc.
-    res.status(404).end();
-  } else {
-    res.sendFile(path.join(__dirname, 'public', 'signup', 'index.html'));
+    return res.status(404).end();
   }
+  res.sendFile(path.join(__dirname, 'public', 'signup', 'index.html'));
 });
+
+// HTTP + Socket.IO server
 const httpServer = createServer(app);
-
-const start = async () => {
-  await sequelize.sync();
-  console.log('Database connected. :)');
-  httpServer.listen(process.env.PORT || 3000, '0.0.0.0');
-};
-
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
@@ -109,58 +114,56 @@ const io = new Server(httpServer, {
 io.on('connection', socket => {
   const token = socket.handshake.headers.authorization;
   socket.id = getSocketId(token);
+
   socket.on('join-room', (room, cb) => {
     socket.join(room);
-    cb(`Connected to ${room}`);
+    cb?.(`Connected to ${room}`);
   });
+
   socket.on('leave-room', (room, cb) => {
     try {
       socket.leave(room);
-      cb(`Left ${room}`);
+      cb?.(`Left ${room}`);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   });
+
   socket.on('send-message', (room = null, cb) => {
     if (room) {
       socket.to(room).emit('refresh');
     }
-    cb(`send-message triggered for, ${room}`);
+    cb?.(`send-message triggered for ${room}`);
   });
-  socket.on('add user', userId => {
-    try {
-      const userSocketId = getUserSocket(userId);
-      if (userSocketId) {
-        socket.to(userSocketId).emit('refresh');
+
+  ['add user', 'remove user', 'admin user'].forEach(event => {
+    socket.on(event, userId => {
+      try {
+        const userSocketId = getUserSocket(userId);
+        if (userSocketId) {
+          socket.to(userSocketId).emit('refresh');
+        }
+      } catch (err) {
+        console.error(err);
       }
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  socket.on('remove user', userId => {
-    try {
-      const userSocketId = getUserSocket(userId);
-      if (userSocketId) {
-        socket.to(userSocketId).emit('refresh');
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  socket.on('admin user', userId => {
-    try {
-      const userSocketId = getUserSocket(userId);
-      if (userSocketId) {
-        socket.to(userSocketId).emit('refresh');
-      }
-    } catch (err) {
-      console.log(err);
-    }
+    });
   });
 });
 
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+// Start server
+const start = async () => {
+  try {
+    await sequelize.sync();
+    console.log('Database connected ✅');
 
+    const PORT = process.env.PORT || 3000;
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+start();
