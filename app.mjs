@@ -97,13 +97,8 @@ const httpServer = createServer(app);
 const start = async () => {
   await sequelize.sync();
   console.log('Database connected. :)');
-  httpServer.listen(process.env.PORT || 3000, '0.0.0.0');
+  httpServer.listen(process.env.PORT || 3000);
 };
-
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
 
 const io = new Server(httpServer, {
   cors: {
@@ -163,5 +158,10 @@ io.on('connection', socket => {
       console.log(err);
     }
   });
+});
+
+start().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
