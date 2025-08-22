@@ -83,6 +83,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+app.use((err, req, res) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 // Catch-all for everything else (only for HTML routes)
 app.get('*', (req, res) => {
   if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
@@ -93,6 +98,12 @@ app.get('*', (req, res) => {
   }
 });
 const httpServer = createServer(app);
+
+const start = async () => {
+  await sequelize.sync();
+  console.log('Database connected. :)');
+  httpServer.listen(process.env.PORT || 3000);
+};
 
 const io = new Server(httpServer, {
   cors: {
@@ -153,12 +164,6 @@ io.on('connection', socket => {
     }
   });
 });
-
-const start = async () => {
-  await sequelize.sync();
-  console.log('Database connected. :)');
-  httpServer.listen(process.env.PORT || 3000);
-};
 
 start().catch(err => {
   console.error('Failed to start server:', err);
