@@ -100,6 +100,11 @@ const start = async () => {
   httpServer.listen(process.env.PORT || 3000, '0.0.0.0');
 };
 
+start().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
+
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
@@ -158,10 +163,5 @@ io.on('connection', socket => {
       console.log(err);
     }
   });
-});
-
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
 });
 
