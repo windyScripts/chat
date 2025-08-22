@@ -2,7 +2,7 @@
 const hostName = '3.26.180.199';
 const port = 3000;
 const domain = `${scheme}://${hostName}:${port}`; */
-const domain = 'http://localhost:3000';
+const domain = window.location.origin;
 
 const getEmailAndPassword = () => {
   const emailField = document.querySelector('#email');
@@ -28,7 +28,7 @@ const validateLogin = async e => {
       const token = response.data.token;
       localStorage.setItem('token', token);
       localStorage.setItem('email',email);
-      window.location.href = '../chat/chat.html';
+      window.location.href = '../chat/index.html';
     } catch (err) {
       console.log(err);
 
@@ -39,13 +39,13 @@ const validateLogin = async e => {
 form.addEventListener('submit', validateLogin);
 
 const signUpRedirect = () => {
-  window.location.href = '../signup/signup.html';
+  window.location.href = '../signup/index.html';
 };
 const signUpButton = document.querySelector('#toSignUp');
 signUpButton.addEventListener('click', signUpRedirect);
 
 const forgotPasswordRedirect = () => {
-  window.location.href = '../forgot-password/forgot-password.html';
+  window.location.href = '../forgot-password/index.html';
 };
 const forgotPasswordButton = document.querySelector('#toForgotEmail');
 forgotPasswordButton.addEventListener('click', forgotPasswordRedirect);

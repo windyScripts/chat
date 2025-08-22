@@ -2,7 +2,7 @@
 const hostName = '3.26.180.199';
 const port = 3000;
 const domain = `${scheme}://${hostName}:${port}`; */
-const domain = 'http://localhost:3000';
+const domain = window.location.origin;
 
 const form = document.querySelector('#form');
 const feedback = document.querySelector('#feedback');
@@ -36,7 +36,7 @@ const toLoginButton = document.querySelector('#toLogin');
 toLoginButton.addEventListener('click', loginRedirect);
 
 function loginRedirect() {
-  window.location.href = '../login/login.html';
+  window.location.href = '../login/index.html';
 }
 
 // frontend validation and handling response

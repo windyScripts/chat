@@ -66,10 +66,27 @@ app.use(bodyParser.json());
 app.use('/auth', authRoutes);
 app.use('/group', groupRoutes);
 
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', req.url));
+// Serve static assets (CSS, JS, images, etc.)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicit routes
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login', 'index.html'));
 });
 
+app.get('/forgot-password', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'forgot-password', 'index.html'));
+});
+
+// Catch-all for everything else (only for HTML routes)
+app.get('*', (req, res) => {
+  if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
+    // Let static middleware handle CSS/JS/images/etc.
+    res.status(404).end();
+  } else {
+    res.sendFile(path.join(__dirname, 'public', 'signup', 'index.html'));
+  }
+});
 const httpServer = createServer(app);
 
 const start = async () => {

@@ -1,4 +1,4 @@
-const domain = 'http://localhost:3000';
+const domain = window.location.origin;
 
 const getToken = () => {
   try {
@@ -29,7 +29,7 @@ async function logOutUser(e) {
   localStorage.removeItem('token');
   localStorage.removeItem('email');
   console.log('token removed!');
-  window.location.href = '../login/login.html';
+  window.location.href = '../login/index.html';
 }
 logOutButton.addEventListener('click', logOutUser);
 
