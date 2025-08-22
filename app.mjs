@@ -83,14 +83,23 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Catch-all for everything else (only for HTML routes)
-app.get('*', (req, res) => {
-  if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
-    // Let static middleware handle CSS/JS/images/etc.
-    res.status(404).end();
-  } else {
-    res.sendFile(path.join(__dirname, 'public', 'signup', 'index.html'));
+// Serve React / HTML routes for client-side routing
+app.use((req, res, next) => {
+  // If the request matches a static file, let express.static handle it
+  if (req.path.includes('.') || req.path.endsWith('.css') || req.path.endsWith('.js')) {
+    return next(); // pass to express.static or next middleware
   }
+
+  // Otherwise, serve the main HTML page
+  res.sendFile(path.join(__dirname, 'public', 'signup', 'index.html'), err => {
+    if (err) {
+      // Fallback error handling
+      console.error('Error sending index.html:', err);
+      if (!res.headersSent) {
+        res.status(500).send('Internal Server Error');
+      }
+    }
+  });
 });
 const httpServer = createServer(app);
 
