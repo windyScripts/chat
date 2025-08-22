@@ -98,6 +98,7 @@ const start = async () => {
   await sequelize.sync();
   console.log('Database connected. :)');
   httpServer.listen(process.env.PORT || 3000);
+  console.log('process stopped');
 };
 
 const io = new Server(httpServer, {
