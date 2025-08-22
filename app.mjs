@@ -92,7 +92,7 @@ const httpServer = createServer(app);
 const start = async () => {
   await sequelize.sync();
   console.log('Database connected. :)');
-  httpServer.listen(process.env.PORT || 3000);
+  httpServer.listen(process.env.PORT || 3000, '0.0.0.0');
 };
 
 const io = new Server(httpServer, {
