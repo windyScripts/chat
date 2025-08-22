@@ -83,11 +83,6 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.use((err, req, res) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
 // Catch-all for everything else (only for HTML routes)
 app.get('*', (req, res) => {
   if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
