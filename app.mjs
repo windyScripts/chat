@@ -78,6 +78,10 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'forgot-password', 'index.html'));
 });
 
+app.get('/', (req, res) => {
+  res.send('Service is running ✅');
+});
+
 // Catch-all for everything else (only for HTML routes)
 app.get('*', (req, res) => {
   if (req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.includes('.')) {
